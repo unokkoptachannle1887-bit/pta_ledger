@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宇野小PTA執行部</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1B2430;
+    --bg-soft:#232E3D;
+    --thread: rgba(168,134,62,.35);
+    --paper:#F5F0E4;
+    --paper-alt:#ECE4D1;
+    --paper-line:#DCD2B8;
+    --ink:#2A2F3A;
+    --ink-soft:#7A7260;
+    --hanko:#B23A2E;
+    --hanko-soft:#D5847A;
+    --gold:#A8863E;
+    --ok:#4B7355;
+    --ok-bg:#E3ECE0;
+    --shortage-bg:#F3E0DA;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    background-image:
+      repeating-linear-gradient(180deg, rgba(255,255,255,.02) 0px, rgba(255,255,255,.02) 1px, transparent 1px, transparent 26px);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  h1,h2,h3{font-family:'Shippori Mincho', serif; margin:0;}
+  .wrap{max-width:1040px; margin:0 auto; padding:0 18px;}
+
+  header.top{
+    background:linear-gradient(180deg,#1F2A38,#182130);
+    border-bottom:3px solid var(--gold);
+    padding:28px 0 22px;
+    position:relative;
+  }
+  .top-inner{display:flex; align-items:flex-start; justify-content:space-between; gap:16px;}
+  .top-title h1{color:var(--paper); font-size:28px; letter-spacing:.06em; font-weight:800;}
+  .top-title p{color:#B9C2CE; font-size:13px; margin-top:6px; letter-spacing:.03em;}
+  .fy-badge{
+    display:inline-block; margin-top:10px; font-family:'JetBrains Mono',monospace;
+    font-size:12px; color:#EFE6CE; background:rgba(168,134,62,.18);
+    border:1px solid var(--gold); padding:3px 10px; border-radius:2px;
+  }
+  .fy-input{
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:#EFE6CE;
+    background:transparent; border:none; border-bottom:1px solid var(--gold);
+    width:52px; min-width:52px; padding:0 0 1px; text-align:center;
+  }
+  .fy-input:focus{outline:none; border-bottom:1.5px solid #EFE6CE;}
+  .fy-hint{color:#8B94A3; font-size:11px; margin:6px 0 0; letter-spacing:.02em;}
+  input#fyInput{width:52px; min-width:52px; color:#EFE6CE;}
+  .hanko-mark{
+    width:66px; height:66px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #C24638, var(--hanko) 70%);
+    color:#F7ECE8; display:flex; align-items:center; justify-content:center;
+    font-family:'Shippori Mincho',serif; font-weight:800; font-size:22px;
+    transform:rotate(-9deg); flex-shrink:0;
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,.18), 0 3px 10px rgba(0,0,0,.4);
+    letter-spacing:2px;
+  }
+
+  nav.tabs{
+    max-width:1040px; margin:22px auto 0; padding:0 18px;
+    display:flex; gap:4px;
+  }
+  nav.tabs button{
+    font-family:'Shippori Mincho',serif; font-size:15px; font-weight:600;
+    background:var(--bg-soft); color:#9DA8B5; border:none;
+    padding:11px 22px; cursor:pointer; border-radius:4px 4px 0 0;
+    border-bottom:3px solid transparent;
+    transition:.15s;
+  }
+  nav.tabs button.active{background:var(--paper); color:var(--ink); border-bottom:3px solid var(--hanko);}
+  nav.tabs button:not(.active):hover{color:var(--paper);}
+
+  main{max-width:1040px; margin:0 auto; padding:0 18px 40px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .card{
+    background:var(--paper); border:1px solid var(--paper-line);
+    border-top:3px solid var(--gold);
+    padding:22px 22px 26px; margin-top:18px;
+    box-shadow:0 10px 30px rgba(0,0,0,.28);
+  }
+  .card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:10px;}
+  .card-head h2{font-size:19px; color:var(--ink);}
+  .card-head .hint{font-size:12px; color:var(--ink-soft); margin-top:4px;}
+
+  .btn{
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:13px; font-weight:700;
+    background:transparent; border:1.5px solid var(--ink); color:var(--ink);
+    padding:7px 14px; cursor:pointer; border-radius:2px; letter-spacing:.02em;
+  }
+  .btn:hover{background:var(--ink); color:var(--paper);}
+  .btn.primary{border-color:var(--hanko); color:var(--hanko);}
+  .btn.primary:hover{background:var(--hanko); color:#fff;}
+  .btn.small{padding:3px 9px; font-size:12px;}
+
+  .table-scroll{overflow-x:auto; margin-top:6px;}
+  table{width:100%; border-collapse:collapse; min-width:560px;}
+  thead th{
+    text-align:left; font-size:12px; color:var(--ink-soft); font-weight:700;
+    background:var(--paper-alt); padding:9px 10px; border-bottom:1px solid var(--paper-line);
+    white-space:nowrap;
+  }
+  tbody td{padding:9px 10px; border-bottom:1px solid var(--paper-line); vertical-align:middle;}
+  tbody tr:hover{background:rgba(168,134,62,.06);}
+  .num{font-family:'JetBrains Mono',monospace; text-align:center;}
+
+  input[type=text], input[type=number], input[type=date], select{
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:13px; color:var(--ink);
+    background:transparent; border:none; border-bottom:1px solid var(--paper-line);
+    padding:5px 2px; width:100%; min-width:90px;
+  }
+  input[type=number]{font-family:'JetBrains Mono',monospace; width:64px; min-width:64px; text-align:center;}
+  input:focus, select:focus{outline:none; border-bottom:1.5px solid var(--hanko);}
+  select{cursor:pointer;}
+
+  .role-name-cell{display:flex; align-items:center; gap:6px;}
+  .role-name-cell input{font-weight:600;}
+  .abolished input[type=text]{text-decoration:line-through; color:var(--ink-soft);}
+  .stamp-tag{
+    font-size:10px; font-weight:700; color:var(--hanko); border:1.3px solid var(--hanko);
+    padding:1px 6px; border-radius:2px; transform:rotate(-4deg); letter-spacing:.05em;
+    white-space:nowrap; flex-shrink:0;
+  }
+  .badge{
+    display:inline-block; font-size:11px; font-weight:700; padding:3px 9px;
+    border-radius:2px; letter-spacing:.03em; white-space:nowrap; transform:rotate(-2deg);
+  }
+  .badge.ok{background:var(--ok-bg); color:var(--ok); border:1px solid var(--ok);}
+  .badge.short{background:var(--shortage-bg); color:var(--hanko); border:1px solid var(--hanko);}
+  .badge.neutral{background:var(--paper-alt); color:var(--ink-soft); border:1px solid var(--paper-line);}
+
+  .icon-btn{background:none; border:none; color:var(--ink-soft); cursor:pointer; font-size:16px; padding:2px 6px;}
+  .icon-btn:hover{color:var(--hanko);}
+
+  .continue-cell{display:flex; flex-direction:column; gap:4px; min-width:170px;}
+  .continue-cell label{display:flex; align-items:center; gap:5px; font-size:12px; color:var(--ink-soft); cursor:pointer;}
+  .continue-cell input[type=radio]{width:auto; accent-color:var(--hanko);}
+  .until-year-row{display:flex; align-items:center; gap:5px; font-size:12px;}
+  .until-year-row input[type=number]{width:64px;}
+
+  .empty-note{font-size:13px; color:var(--ink-soft); padding:16px 4px; font-style:normal;}
+
+  .shortage-summary{margin-top:14px; padding:12px 14px; background:var(--shortage-bg); border-left:3px solid var(--hanko); font-size:13px;}
+  .shortage-summary.none{background:var(--ok-bg); border-left-color:var(--ok); color:var(--ok);}
+  .shortage-summary b{display:block; font-size:12px; margin-bottom:4px; letter-spacing:.03em;}
+
+  /* handoff list */
+  .handoff-list{display:flex; flex-direction:column; gap:10px; margin-top:6px;}
+  .handoff-row{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    padding:10px 12px; background:var(--paper-alt); border:1px solid var(--paper-line);
+  }
+  .handoff-role{font-weight:700; font-size:13px; min-width:110px;}
+  .handoff-chain{display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px;}
+  .handoff-name{padding:2px 8px; border:1px solid var(--paper-line); background:var(--paper);}
+  .handoff-name.leaving{color:var(--ink-soft); text-decoration:line-through;}
+  .handoff-arrow{color:var(--gold); font-weight:700;}
+  .handoff-name.tbd{color:var(--hanko); border-color:var(--hanko); font-weight:700; text-decoration:none;}
+  .handoff-name.stay{border-color:var(--ok); color:var(--ok);}
+  .sync-bar{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    background:var(--ink); border:1px solid var(--gold); padding:8px 14px; margin:16px 0 4px;
+    font-size:12px; color:var(--paper);
+  }
+  .sync-bar .btn{border-color:var(--gold); color:var(--paper);}
+  .sync-bar .btn:hover{background:var(--gold); color:var(--ink);}
+  .sync-status{font-size:11px; color:var(--paper); opacity:.9;}
+
+  /* schedule */
+  .sched-tabs{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; align-items:center;}
+  .sched-tab{
+    font-family:'Zen Kaku Gothic New',sans-serif; font-size:12.5px; font-weight:700;
+    background:var(--paper-alt); color:var(--ink-soft); border:1px solid var(--paper-line);
+    padding:6px 13px; cursor:pointer; border-radius:14px; white-space:nowrap;
+  }
+  .sched-tab.active{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+  .sched-tab.add{background:transparent; border:1.5px dashed var(--gold); color:var(--gold);}
+  .sched-tab.add:hover{background:rgba(168,134,62,.12);}
+
+  .sched-editor{display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap; margin-bottom:6px; padding-top:4px; border-top:1px dashed var(--paper-line);}
+  .sched-editor .field{padding-top:14px;}
+  .sched-editor .field label{display:block; font-size:12px; color:var(--ink-soft); margin-bottom:4px;}
+  .sched-editor input[type=text]{border:1px solid var(--paper-line); padding:7px 9px; min-width:180px;}
+  .sched-editor input[type=date]{border:1px solid var(--paper-line); padding:7px 9px; min-width:150px;}
+  .sched-editor .btn.danger{border-color:var(--hanko-soft); color:var(--hanko);}
+  .sched-editor .btn.danger:hover{background:var(--hanko); color:#fff; border-color:var(--hanko);}
+
+  .timeline{position:relative; margin:22px 4px 6px; padding-left:26px;}
+  .timeline::before{content:""; position:absolute; left:8px; top:4px; bottom:4px; width:0; border-left:2px dashed var(--thread);}
+  .t-item{position:relative; padding:0 0 20px 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .t-dot{
+    position:absolute; left:-26px; top:2px; width:15px; height:15px; border-radius:50%;
+    background:var(--hanko); border:2.5px solid var(--paper); box-shadow:0 0 0 1.5px var(--hanko);
+  }
+  .t-days{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--gold); min-width:64px; flex-shrink:0;}
+  .t-item input[type=text]{flex:1 1 220px; min-width:180px; font-size:13px;}
+  .t-item input[type=date]{width:150px; flex-shrink:0; border-bottom:1px solid var(--paper-line);}
+
+  .month-row{display:flex; flex-wrap:wrap; gap:16px; margin-top:16px;}
+  .month-card{
+    background:var(--paper-alt); border:1px solid var(--paper-line); padding:12px 14px 14px;
+    width:210px; flex:0 0 auto;
+  }
+  .month-card h3{font-size:14px; margin-bottom:8px; color:var(--ink); letter-spacing:.03em;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:2px;}
+  .cal-grid .wd{font-size:10px; color:var(--ink-soft); text-align:center; padding-bottom:3px;}
+  .cal-grid .wd.sun{color:var(--hanko);}
+  .cal-grid .wd.sat{color:#3E6C9E;}
+  .cal-grid .day{
+    font-family:'JetBrains Mono',monospace; font-size:11px; text-align:center;
+    padding:4px 0 6px; position:relative; color:var(--ink);
+  }
+  .cal-grid .day.pad{visibility:hidden;}
+  .cal-grid .day.today{background:var(--ink); color:var(--paper); border-radius:50%;}
+  .cal-grid .day .dot{
+    display:block; width:4px; height:4px; border-radius:50%; background:var(--hanko);
+    margin:2px auto 0;
+  }
+
+  .role-cell{
+    display:flex; flex-direction:column; gap:3px; max-height:120px; overflow-y:auto;
+    min-width:170px; padding:2px;
+  }
+  .role-cell label{display:flex; align-items:center; gap:5px; font-size:12px; color:var(--ink-soft); cursor:pointer;}
+  .role-cell input[type=checkbox]{width:auto; accent-color:var(--hanko);}
+
+  footer.note{
+    max-width:1040px; margin:26px auto 0; padding:0 18px; font-size:11.5px; color:#7C8798;
+  }
+
+  @media (max-width:640px){
+    .top-title h1{font-size:22px;}
+    .hanko-mark{width:52px; height:52px; font-size:17px;}
+    .card{padding:16px 14px 20px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="top-title">
+      <h1>宇野小PTA執行部</h1>
+      <p>担当・任期・後任人数をひとつの帳簿で管理</p>
+      <span class="fy-badge" id="fyBadgeWrap">
+        <input type="number" id="fyInput" class="fy-input"> 年度 → <span id="nextFyDisplay"></span>年度
+      </span>
+      <p class="fy-hint">年度を進めると、退任予定の人は名簿から外れます（元に戻せません）</p>
+    </div>
+    <div class="hanko-mark">役員</div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button id="tabBtnRoster" class="active">役員名簿</button>
+  <button id="tabBtnSchedule">募集スケジュール</button>
+</nav>
+
+<main>
+  <div class="sync-bar">
+    <span>👥 このページを開いている全員で同じデータを共有しています。他の人の入力を取り込むには更新してください。</span>
+    <span class="sync-status" id="syncStatus"></span>
+    <button class="btn small" id="refreshBtn">⟳ 最新の状態に更新</button>
+  </div>
+
+  <!-- ROSTER PANEL -->
+  <section class="panel active" id="panelRoster">
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>メンバー一覧</h2>
+          <div class="hint">氏名・担当役割・続投予定を入力してください。</div>
+        </div>
+        <button class="btn primary" id="addMemberBtn">＋ メンバーを追加</button>
+      </div>
+      <div class="table-scroll">
+        <table id="membersTable">
+          <thead>
+            <tr>
+              <th style="width:18%">氏名</th>
+              <th style="width:18%">担当役割</th>
+              <th>継続予定</th>
+              <th style="width:18%">後任予定者</th>
+              <th style="width:18%">備考</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="membersBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>引き継ぎ一覧</h2>
+          <div class="hint">誰の役割が誰に引き継がれるか（退任予定者→後任予定者）をまとめます。</div>
+        </div>
+      </div>
+      <div class="handoff-list" id="handoffList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>役割一覧</h2>
+          <div class="hint">来年度に必要な人数と、廃止予定の役割を管理します。</div>
+        </div>
+        <button class="btn primary" id="addRoleBtn">＋ 役割を追加</button>
+      </div>
+      <div class="table-scroll">
+        <table id="rolesTable">
+          <thead>
+            <tr>
+              <th style="width:34%">役割名</th>
+              <th>現員数</th>
+              <th>来年度必要人数</th>
+              <th>廃止予定</th>
+              <th>状態</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="rolesBody"></tbody>
+        </table>
+      </div>
+      <div id="shortageSummary" class="shortage-summary"></div>
+    </div>
+  </section>
+
+  <!-- SCHEDULE PANEL -->
+  <section class="panel" id="panelSchedule">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>逆算スケジュール</h2>
+          <div class="hint">締切日・実施日から逆算して、準備の目安を組み立てます。いくつでも作成できます。</div>
+        </div>
+      </div>
+
+      <div class="sched-tabs" id="scheduleTabs"></div>
+      <div class="sched-editor" id="scheduleEditor"></div>
+
+      <div class="timeline" id="timelineWrap"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>カレンダー</h2>
+          <div class="hint" id="calendarHint">赤い点がついている日は、選択中のスケジュールの予定日です。</div>
+        </div>
+      </div>
+      <div class="month-row" id="calendarWrap"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="note">
+  ※このリンクを開いた人全員で同じデータを共有します。同時に編集すると後から保存した方の内容で上書きされるため、なるべく時間をずらすか「最新の状態に更新」してから入力してください。
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- date / fiscal year helpers ----------
+  function pad2(n){return String(n).padStart(2,'0');}
+  function toISO(d){return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
+  function parseISO(s){ var p=s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
+  function addDaysISO(iso, days){ var d=parseISO(iso); d.setDate(d.getDate()+days); return toISO(d); }
+  function fiscalYearOf(d){ var m=d.getMonth()+1, y=d.getFullYear(); return m>=4 ? y : y-1; }
+
+  var today = new Date();
+  var currentFY = fiscalYearOf(today);
+  var nextFY = currentFY + 1;
+
+  function uid(){ return 'id-'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+  // ---------- state ----------
+  // ↓ここをデプロイしたGASウェブアプリのURLに書き換えてください
+  var GAS_URL = 'https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXX/exec';
+  var state = null;
+
+  function defaultState(){
+    var r1 = uid(), r2 = uid();
+    return {
+      baseFiscalYear: fiscalYearOf(today),
+      roles: [
+        {id:r1, name:'会長', neededNextYear:1, abolishNextYear:false},
+        {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false}
+      ],
+      members: [
+        {id:uid(), name:'山田 太郎', roleIds:[r1], continueType:'thisYear', untilYear:currentFY, successor:'', note:''},
+        {id:uid(), name:'佐藤 花子', roleIds:[r2], continueType:'untilYear', untilYear:currentFY+1, successor:'', note:''}
+      ],
+      schedules: []
+    };
+  }
+
+  // migrate data saved by an older version of this app (single schedule at top level, single roleId per member, history array)
+  function migrateState(s){
+    var hasLegacy = s.scheduleTargetDate || (s.scheduleTasks && s.scheduleTasks.length);
+    if(!s.schedules) s.schedules = [];
+    delete s.history; // 過去バージョンで保存されていた履歴データは個人情報のため破棄
+    if(s.schedules.length === 0 && hasLegacy){
+      s.schedules.push({
+        id: uid(),
+        name: s.scheduleEventName || 'スケジュール1',
+        targetDate: s.scheduleTargetDate || '',
+        tasks: s.scheduleTasks || []
+      });
+    }
+    delete s.scheduleEventName;
+    delete s.scheduleTargetDate;
+    delete s.scheduleTasks;
+    (s.members || []).forEach(function(m){
+      if(!m.roleIds){
+        m.roleIds = m.roleId ? [m.roleId] : [];
+      }
+      delete m.roleId;
+    });
+    return s;
+  }
+
+  var TASK_TEMPLATE = [
+    {weeksBefore:9, name:'進め方の方向性を決める'},
+    {weeksBefore:7, name:'必要な情報・素材を集める'},
+    {weeksBefore:5, name:'たたき台を作成する'},
+    {weeksBefore:3, name:'内容を確認・修正する'},
+    {weeksBefore:1, name:'最終確認・印刷や送付などの準備'},
+    {weeksBefore:0, name:''}
+  ];
+
+  function generateTasks(schedule){
+    var target = schedule.targetDate;
+    if(!target) return [];
+    return TASK_TEMPLATE.map(function(t){
+      var name = t.name;
+      if(t.weeksBefore === 0){
+        name = (schedule.name || '').trim() || '実施日 / 締切日';
+      }
+      return {id:uid(), name:name, date:addDaysISO(target, -7*t.weeksBefore)};
+    });
+  }
+
+  // ---------- storage ----------
+  // Returns true if remote data was successfully loaded into `state`.
+  // On failure it NEVER overwrites state or storage — the caller decides what to do.
+  async function tryFetchRemote(){
+    try{
+      var res = await fetch(GAS_URL, {method:'GET'});
+      var text = await res.text();
+      if(text){
+        var parsed = JSON.parse(text);
+        var merged = Object.assign(defaultState(), parsed);
+        migrateState(merged);
+        state = merged;
+        return true;
+      }
+    }catch(e){ /* not saved yet, or network/transient error */ }
+    return false;
+  }
+
+  // Initial load: safe to bootstrap a fresh default (and save it) because there is
+  // no in-memory state yet to lose.
+  async function loadInitial(){
+    var ok = await tryFetchRemote();
+    if(!ok){
+      state = defaultState();
+      saveState();
+    }
+  }
+
+  // Refresh: must never fabricate/overwrite data. If the fetch fails, keep whatever
+  // is currently in memory untouched and just report the failure.
+  async function refreshFromRemote(){
+    var ok = await tryFetchRemote();
+    return ok;
+  }
+
+  var saveTimer = null;
+  function saveState(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async function(){
+      try{
+        // text/plain指定はGAS側とのCORSプリフライトを避けるための意図的な指定
+        await fetch(GAS_URL, {
+          method:'POST',
+          headers:{'Content-Type':'text/plain;charset=utf-8'},
+          body: JSON.stringify(state)
+        });
+      }catch(e){ console.error('storage save failed', e); }
+    }, 150);
+  }
+
+  // ---------- computed ----------
+  function roleStats(role){
+    var current = 0, nextYear = 0;
+    state.members.forEach(function(m){
+      if((m.roleIds||[]).indexOf(role.id) === -1) return;
+      current++;
+      if(m.continueType === 'indefinite') nextYear++;
+      else if(m.continueType === 'untilYear' && Number(m.untilYear) >= nextFY) nextYear++;
+    });
+    return {current:current, nextYear:nextYear};
+  }
+
+  // ---------- rendering ----------
+  var rolesBody = document.getElementById('rolesBody');
+  var membersBody = document.getElementById('membersBody');
+  var shortageSummary = document.getElementById('shortageSummary');
+  var scheduleTabsWrap = document.getElementById('scheduleTabs');
+  var scheduleEditorWrap = document.getElementById('scheduleEditor');
+  var timelineWrap = document.getElementById('timelineWrap');
+  var calendarWrap = document.getElementById('calendarWrap');
+  var fyInput = document.getElementById('fyInput');
+  var nextFyDisplay = document.getElementById('nextFyDisplay');
+
+  var activeScheduleId = null; // local view state only — never saved/shared
+
+  function syncFiscalYear(){
+    currentFY = (state && state.baseFiscalYear) || fiscalYearOf(today);
+    nextFY = currentFY + 1;
+    fyInput.value = currentFY;
+    nextFyDisplay.textContent = nextFY;
+  }
+
+  fyInput.addEventListener('change', function(){
+    var v = parseInt(fyInput.value, 10);
+    if(!v){ fyInput.value = currentFY; return; }
+    if(v === currentFY){ return; }
+
+    if(v > currentFY){
+      var msg = currentFY + '年度から' + v + '年度に切り替えます。\n' +
+        '・継続予定なし（今年度いっぱい）の人 → 退任として名簿から外れます（元には戻せません）\n' +
+        '・◯◯年度まで継続の人 → その年度まではそのまま名簿に残ります\n' +
+        '・継続予定（時期未定）の人 → そのまま名簿に残ります\n\n' +
+        'よろしいですか？';
+      if(!window.confirm(msg)){ fyInput.value = currentFY; return; }
+      advanceFiscalYearTo(v);
+      showSyncStatus(v + '年度に切り替えました');
+    } else {
+      // 過去の年度に戻す場合は、しまう処理はせず年度表示だけを訂正する
+      state.baseFiscalYear = v;
+      syncFiscalYear();
+      saveState();
+      renderAll();
+    }
+  });
+
+  // 年度を指定の年度(targetYear)まで進め、退任者(継続予定なし/継続期限が来た人)を名簿から外す。
+  // 「来年度も継続予定（時期未定）」の人と、継続期限が先の人はそのまま名簿に残る。
+  // 過去の名簿は保存しない(個人情報を残さないため)。
+  function advanceFiscalYearTo(targetYear){
+    var incoming = targetYear;
+
+    var abolishedRoleIds = {};
+    state.roles.forEach(function(r){ if(r.abolishNextYear) abolishedRoleIds[r.id] = true; });
+
+    state.members = state.members.filter(function(m){
+      if(m.continueType === 'indefinite') return true;
+      if(m.continueType === 'untilYear') return Number(m.untilYear) >= incoming;
+      return false; // 'thisYear'（継続予定なし）は退任として名簿から外れる
+    });
+    state.members.forEach(function(m){
+      // 継続期限がちょうど新年度に到達した人は「今年度いっぱい」に自動で切り替える
+      if(m.continueType === 'untilYear' && Number(m.untilYear) === incoming){
+        m.continueType = 'thisYear';
+      }
+      m.roleIds = (m.roleIds||[]).filter(function(rid){ return !abolishedRoleIds[rid]; });
+      m.successor = '';
+    });
+
+    state.roles = state.roles.filter(function(r){ return !r.abolishNextYear; });
+
+    state.baseFiscalYear = incoming;
+    syncFiscalYear();
+    saveState();
+    renderAll();
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function renderRoles(){
+    if(state.roles.length === 0){
+      rolesBody.innerHTML = '<tr><td colspan="6" class="empty-note">まだ役割が登録されていません。「＋ 役割を追加」から始めましょう。</td></tr>';
+    } else {
+      rolesBody.innerHTML = state.roles.map(function(role){
+        var stats = roleStats(role);
+        var abolished = role.abolishNextYear;
+        var short = !abolished && stats.nextYear < role.neededNextYear;
+        var badge;
+        if(abolished){
+          badge = '<span class="badge neutral">廃止予定</span>';
+        } else if(short){
+          badge = '<span class="badge short">不足 (あと' + (role.neededNextYear - stats.nextYear) + '名)</span>';
+        } else {
+          badge = '<span class="badge ok">充足</span>';
+        }
+        return '' +
+        '<tr data-role-id="'+role.id+'" class="'+(abolished?'abolished':'')+'">' +
+          '<td><div class="role-name-cell">' +
+            '<input type="text" data-field="name" data-id="'+role.id+'" value="'+esc(role.name)+'" placeholder="役割名">' +
+            (abolished ? '<span class="stamp-tag">廃止</span>' : '') +
+          '</div></td>' +
+          '<td class="num">'+stats.current+'</td>' +
+          '<td class="num"><input type="number" min="0" data-field="neededNextYear" data-id="'+role.id+'" value="'+role.neededNextYear+'"></td>' +
+          '<td class="num"><input type="checkbox" data-field="abolishNextYear" data-id="'+role.id+'" '+(role.abolishNextYear?'checked':'')+'></td>' +
+          '<td>'+badge+'</td>' +
+          '<td><button class="icon-btn" data-action="deleteRole" data-id="'+role.id+'" title="削除">✕</button></td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    var shorts = state.roles.filter(function(role){
+      if(role.abolishNextYear) return false;
+      var s = roleStats(role);
+      return s.nextYear < role.neededNextYear;
+    });
+    if(shorts.length === 0){
+      shortageSummary.className = 'shortage-summary none';
+      shortageSummary.innerHTML = '<b>状態</b>来年度、人数が不足している役割はありません。';
+    } else {
+      shortageSummary.className = 'shortage-summary';
+      shortageSummary.innerHTML = '<b>来年度、人数が不足している役割</b>' +
+        shorts.map(function(role){
+          var s = roleStats(role);
+          return esc(role.name || '（名称未設定）') + '（あと' + (role.neededNextYear - s.nextYear) + '名）';
+        }).join('、');
+    }
+  }
+
+  function roleCheckboxes(m){
+    if(state.roles.length === 0){
+      return '<div class="empty-note" style="padding:0;">役割未登録</div>';
+    }
+    var selected = m.roleIds || [];
+    return '<div class="role-cell">' + state.roles.map(function(role){
+      var checked = selected.indexOf(role.id) !== -1;
+      var label = (role.name || '（名称未設定）') + (role.abolishNextYear ? '（廃止予定）' : '');
+      return '<label><input type="checkbox" data-field="roleIds" data-role="'+role.id+'" data-id="'+m.id+'" '+(checked?'checked':'')+'> '+esc(label)+'</label>';
+    }).join('') + '</div>';
+  }
+
+  function renderMembers(){
+    if(state.members.length === 0){
+      membersBody.innerHTML = '<tr><td colspan="5" class="empty-note">まだメンバーが登録されていません。「＋ メンバーを追加」から始めましょう。</td></tr>';
+      return;
+    }
+    membersBody.innerHTML = state.members.map(function(m){
+      var ct = m.continueType || 'thisYear';
+      var isUntil = ct === 'untilYear';
+      var isIndef = ct === 'indefinite';
+      var noSuccessorNeeded = isUntil || isIndef;
+      return '' +
+      '<tr data-member-id="'+m.id+'">' +
+        '<td><input type="text" data-field="name" data-id="'+m.id+'" value="'+esc(m.name)+'" placeholder="氏名"></td>' +
+        '<td>'+roleCheckboxes(m)+'</td>' +
+        '<td><div class="continue-cell">' +
+          '<label><input type="radio" name="ct-'+m.id+'" data-field="continueType" data-value="thisYear" data-id="'+m.id+'" '+(ct==='thisYear'?'checked':'')+'> 今年度('+currentFY+')いっぱい</label>' +
+          '<label><input type="radio" name="ct-'+m.id+'" data-field="continueType" data-value="untilYear" data-id="'+m.id+'" '+(isUntil?'checked':'')+'>' +
+            '<span class="until-year-row"><input type="number" data-field="untilYear" data-id="'+m.id+'" value="'+(m.untilYear||nextFY)+'" '+(isUntil?'':'disabled')+'>年度まで継続</span>' +
+          '</label>' +
+          '<label><input type="radio" name="ct-'+m.id+'" data-field="continueType" data-value="indefinite" data-id="'+m.id+'" '+(isIndef?'checked':'')+'> 来年度も継続予定（時期未定）</label>' +
+        '</div></td>' +
+        '<td><input type="text" data-field="successor" data-id="'+m.id+'" value="'+esc(m.successor||'')+'" placeholder="'+(noSuccessorNeeded?'（継続のため不要）':'例：鈴木 一郎')+'" '+(noSuccessorNeeded?'disabled':'')+'></td>' +
+        '<td><input type="text" data-field="note" data-id="'+m.id+'" value="'+esc(m.note||'')+'" placeholder="任意"></td>' +
+        '<td><button class="icon-btn" data-action="deleteMember" data-id="'+m.id+'" title="削除">✕</button></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function daysLabel(days){
+    if(days === 0) return '当日';
+    return days+'日前';
+  }
+
+  function getActiveSchedule(){
+    return state.schedules.find(function(s){ return s.id === activeScheduleId; }) || null;
+  }
+
+  function ensureActiveSchedule(){
+    if(!activeScheduleId || !getActiveSchedule()){
+      activeScheduleId = state.schedules.length ? state.schedules[0].id : null;
+    }
+  }
+
+  function renderScheduleTabs(){
+    var html = state.schedules.map(function(s){
+      var active = s.id === activeScheduleId;
+      return '<button class="sched-tab'+(active?' active':'')+'" data-action="selectSchedule" data-id="'+s.id+'">'+esc(s.name || '（名称未設定）')+'</button>';
+    }).join('');
+    html += '<button class="sched-tab add" data-action="addSchedule">＋ 新しいスケジュール</button>';
+    scheduleTabsWrap.innerHTML = html;
+  }
+
+  function renderScheduleEditor(){
+    var sc = getActiveSchedule();
+    if(!sc){
+      scheduleEditorWrap.innerHTML = '<div class="empty-note">まだスケジュールがありません。「＋ 新しいスケジュール」から作成しましょう。</div>';
+      timelineWrap.innerHTML = '';
+      return;
+    }
+    scheduleEditorWrap.innerHTML = '' +
+      '<div class="field"><label>スケジュール名</label><input type="text" id="scheduleNameInput" value="'+esc(sc.name)+'" placeholder="例：懇親会の案内配布"></div>' +
+      '<div class="field"><label>締切日 / 実施予定日</label><input type="date" id="targetDateInput" value="'+(sc.targetDate||'')+'"></div>' +
+      '<button class="btn" id="regenBtn">◎ 目安のスケジュールを生成</button>' +
+      '<button class="btn primary" id="addTaskBtn">＋ 項目を追加</button>' +
+      '<button class="btn danger" id="deleteScheduleBtn">このスケジュールを削除</button>';
+  }
+
+  function renderTimeline(){
+    var sc = getActiveSchedule();
+    if(!sc) return;
+    var target = sc.targetDate;
+    if(!sc.tasks || sc.tasks.length===0){
+      timelineWrap.innerHTML = '<div class="empty-note">まだ項目がありません。締切日を入力して「◎ 目安のスケジュールを生成」を押すか、「＋ 項目を追加」で作成してください。</div>';
+      return;
+    }
+    var sorted = sc.tasks.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+    timelineWrap.innerHTML = sorted.map(function(t){
+      var daysHtml = '';
+      if(target){
+        var diff = Math.round((parseISO(target) - parseISO(t.date)) / 86400000);
+        daysHtml = daysLabel(diff);
+      }
+      return '' +
+      '<div class="t-item" data-task-id="'+t.id+'">' +
+        '<div class="t-dot"></div>' +
+        '<div class="t-days">'+daysHtml+'</div>' +
+        '<input type="date" data-field="date" data-id="'+t.id+'" value="'+t.date+'">' +
+        '<input type="text" data-field="name" data-id="'+t.id+'" value="'+esc(t.name)+'">' +
+        '<button class="icon-btn" data-action="deleteTask" data-id="'+t.id+'" title="削除">✕</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  var WD = ['日','月','火','水','木','金','土'];
+
+  function renderCalendar(){
+    var sc = getActiveSchedule();
+    var calendarHint = document.getElementById('calendarHint');
+    if(!sc){
+      calendarWrap.innerHTML = '';
+      if(calendarHint) calendarHint.textContent = 'スケジュールを作成すると、ここにカレンダーが表示されます。';
+      return;
+    }
+    if(calendarHint) calendarHint.textContent = '赤い点がついている日は、「'+ (sc.name||'（名称未設定）') +'」の予定日です。';
+
+    var months = [];
+    var cur = new Date(today.getFullYear(), today.getMonth(), 1);
+    var endMonth = cur;
+    if(sc.targetDate){
+      var target = parseISO(sc.targetDate);
+      endMonth = new Date(target.getFullYear(), target.getMonth(), 1);
+    }
+    var maxTaskMonth = endMonth;
+    (sc.tasks||[]).forEach(function(t){
+      var d = parseISO(t.date);
+      var mo = new Date(d.getFullYear(), d.getMonth(), 1);
+      if(mo > maxTaskMonth) maxTaskMonth = mo;
+      if(mo < cur) cur = mo;
+    });
+    if(endMonth > maxTaskMonth) maxTaskMonth = endMonth;
+
+    var iter = new Date(cur);
+    var guard = 0;
+    while(iter <= maxTaskMonth && guard < 14){
+      months.push(new Date(iter));
+      iter.setMonth(iter.getMonth()+1);
+      guard++;
+    }
+
+    var taskDates = {};
+    (sc.tasks||[]).forEach(function(t){ taskDates[t.date] = (taskDates[t.date]||[]).concat(t.name); });
+    var todayISO = toISO(today);
+
+    calendarWrap.innerHTML = months.map(function(m){
+      var y = m.getFullYear(), mo = m.getMonth();
+      var first = new Date(y, mo, 1);
+      var daysInMonth = new Date(y, mo+1, 0).getDate();
+      var startWd = first.getDay();
+      var cells = '';
+      for(var i=0;i<startWd;i++){ cells += '<div class="day pad">.</div>'; }
+      for(var d=1; d<=daysInMonth; d++){
+        var iso = y+'-'+pad2(mo+1)+'-'+pad2(d);
+        var isToday = iso === todayISO;
+        var hasTask = !!taskDates[iso];
+        var title = hasTask ? taskDates[iso].join(' / ') : '';
+        cells += '<div class="day'+(isToday?' today':'')+'" '+(title?'title="'+esc(title)+'"':'')+'>'+d+
+          (hasTask ? '<span class="dot"></span>' : '') + '</div>';
+      }
+      var wdHtml = WD.map(function(w,i){
+        return '<div class="wd '+(i===0?'sun':i===6?'sat':'')+'">'+w+'</div>';
+      }).join('');
+      return '<div class="month-card"><h3>'+y+'年 '+(mo+1)+'月</h3><div class="cal-grid">'+wdHtml+cells+'</div></div>';
+    }).join('');
+  }
+
+  var handoffList = document.getElementById('handoffList');
+
+  function renderHandoff(){
+    // group members by role
+    var byRole = {};
+    state.members.forEach(function(m){
+      (m.roleIds||[]).forEach(function(rid){
+        (byRole[rid] = byRole[rid] || []).push(m);
+      });
+    });
+
+    var rows = [];
+    state.roles.forEach(function(role){
+      var mems = byRole[role.id] || [];
+      if(mems.length === 0){
+        if(role.abolishNextYear) return; // no one held it, and it's being abolished — nothing to show
+        rows.push({role:role, chain:'<span class="handoff-name tbd">担当者未設定</span>'});
+        return;
+      }
+      mems.forEach(function(m){
+        var isUntil = m.continueType === 'untilYear';
+        var isIndef = m.continueType === 'indefinite';
+        var chain;
+        if(role.abolishNextYear){
+          chain = '<span class="handoff-name leaving">'+esc(m.name||'（未入力）')+'</span> <span class="handoff-arrow">→</span> <span class="handoff-name stay">（役割ごと廃止）</span>';
+        } else if(isUntil){
+          chain = '<span class="handoff-name stay">'+esc(m.name||'（未入力）')+'（留任・'+m.untilYear+'年度まで）</span>';
+        } else if(isIndef){
+          chain = '<span class="handoff-name stay">'+esc(m.name||'（未入力）')+'（留任・時期未定）</span>';
+        } else {
+          var succ = (m.successor||'').trim();
+          chain = '<span class="handoff-name leaving">'+esc(m.name||'（未入力）')+'</span> <span class="handoff-arrow">→</span> ' +
+            (succ ? '<span class="handoff-name">'+esc(succ)+'</span>' : '<span class="handoff-name tbd">後任未定</span>');
+        }
+        rows.push({role:role, chain:chain});
+      });
+    });
+
+    if(rows.length === 0){
+      handoffList.innerHTML = '<div class="empty-note">役割とメンバーを登録すると、ここに引き継ぎ状況が表示されます。</div>';
+      return;
+    }
+    handoffList.innerHTML = rows.map(function(r){
+      return '<div class="handoff-row"><span class="handoff-role">'+esc(r.role.name||'（名称未設定）')+'</span><span class="handoff-chain">'+r.chain+'</span></div>';
+    }).join('');
+  }
+
+  function renderAll(){
+    ensureActiveSchedule();
+    renderRoles();
+    renderMembers();
+    renderHandoff();
+    renderScheduleTabs();
+    renderScheduleEditor();
+    renderTimeline();
+    renderCalendar();
+  }
+
+  // ---------- events ----------
+  document.getElementById('addRoleBtn').addEventListener('click', function(){
+    state.roles.push({id:uid(), name:'', neededNextYear:1, abolishNextYear:false});
+    saveState(); renderAll();
+  });
+  document.getElementById('addMemberBtn').addEventListener('click', function(){
+    state.members.push({id:uid(), name:'', roleIds:[], continueType:'thisYear', untilYear:currentFY, successor:'', note:''});
+    saveState(); renderAll();
+  });
+  scheduleTabsWrap.addEventListener('click', function(e){
+    var addBtn = e.target.closest('[data-action="addSchedule"]');
+    if(addBtn){
+      var sc = {id:uid(), name:'新しいスケジュール', targetDate:'', tasks:[]};
+      state.schedules.push(sc);
+      activeScheduleId = sc.id;
+      saveState(); renderAll();
+      return;
+    }
+    var selBtn = e.target.closest('[data-action="selectSchedule"]');
+    if(selBtn){
+      activeScheduleId = selBtn.getAttribute('data-id');
+      renderScheduleEditor(); renderTimeline(); renderCalendar(); renderScheduleTabs();
+    }
+  });
+
+  scheduleEditorWrap.addEventListener('click', function(e){
+    var sc = getActiveSchedule();
+    if(!sc) return;
+    if(e.target.closest('#addTaskBtn')){
+      sc.tasks = sc.tasks || [];
+      sc.tasks.push({id:uid(), name:'', date: sc.targetDate || toISO(today)});
+      saveState(); renderTimeline(); renderCalendar();
+      return;
+    }
+    if(e.target.closest('#regenBtn')){
+      if(!sc.targetDate){
+        timelineWrap.innerHTML = '<div class="empty-note">先に「締切日 / 実施予定日」を入力してください。</div>';
+        return;
+      }
+      sc.tasks = generateTasks(sc);
+      saveState(); renderTimeline(); renderCalendar();
+      return;
+    }
+    if(e.target.closest('#deleteScheduleBtn')){
+      state.schedules = state.schedules.filter(function(s){ return s.id !== sc.id; });
+      activeScheduleId = null;
+      saveState(); renderAll();
+      return;
+    }
+  });
+
+  scheduleEditorWrap.addEventListener('change', function(e){
+    var sc = getActiveSchedule();
+    if(!sc) return;
+    if(e.target.id === 'scheduleNameInput'){
+      sc.name = e.target.value;
+      saveState(); renderScheduleTabs(); renderCalendar();
+    } else if(e.target.id === 'targetDateInput'){
+      if(e.target.value){
+        sc.targetDate = e.target.value;
+        saveState(); renderTimeline(); renderCalendar();
+      }
+    }
+  });
+
+  rolesBody.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-action="deleteRole"]');
+    if(!btn) return;
+    var id = btn.getAttribute('data-id');
+    state.roles = state.roles.filter(function(r){ return r.id !== id; });
+    state.members.forEach(function(m){ m.roleIds = (m.roleIds||[]).filter(function(rid){ return rid !== id; }); });
+    saveState(); renderAll();
+  });
+  rolesBody.addEventListener('change', function(e){
+    var t = e.target;
+    var id = t.getAttribute('data-id');
+    var field = t.getAttribute('data-field');
+    if(!id || !field) return;
+    var role = state.roles.find(function(r){ return r.id === id; });
+    if(!role) return;
+    if(field === 'name') role.name = t.value;
+    else if(field === 'neededNextYear') role.neededNextYear = Math.max(0, parseInt(t.value,10) || 0);
+    else if(field === 'abolishNextYear') role.abolishNextYear = t.checked;
+    saveState(); renderAll();
+  });
+
+  membersBody.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-action="deleteMember"]');
+    if(!btn) return;
+    var id = btn.getAttribute('data-id');
+    state.members = state.members.filter(function(m){ return m.id !== id; });
+    saveState(); renderAll();
+  });
+  membersBody.addEventListener('change', function(e){
+    var t = e.target;
+    var id = t.getAttribute('data-id');
+    var field = t.getAttribute('data-field');
+    if(!id || !field) return;
+    var member = state.members.find(function(m){ return m.id === id; });
+    if(!member) return;
+    if(field === 'name') member.name = t.value;
+    else if(field === 'note') member.note = t.value;
+    else if(field === 'successor') member.successor = t.value;
+    else if(field === 'roleIds'){
+      var rid = t.getAttribute('data-role');
+      member.roleIds = member.roleIds || [];
+      var idx = member.roleIds.indexOf(rid);
+      if(t.checked && idx === -1) member.roleIds.push(rid);
+      else if(!t.checked && idx !== -1) member.roleIds.splice(idx, 1);
+    }
+    else if(field === 'continueType') member.continueType = t.getAttribute('data-value');
+    else if(field === 'untilYear') member.untilYear = parseInt(t.value,10) || nextFY;
+    saveState(); renderAll();
+  });
+
+  timelineWrap.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-action="deleteTask"]');
+    if(!btn) return;
+    var sc = getActiveSchedule();
+    if(!sc) return;
+    var id = btn.getAttribute('data-id');
+    sc.tasks = sc.tasks.filter(function(t){ return t.id !== id; });
+    saveState(); renderTimeline(); renderCalendar();
+  });
+  timelineWrap.addEventListener('change', function(e){
+    var sc = getActiveSchedule();
+    if(!sc) return;
+    var t = e.target;
+    var id = t.getAttribute('data-id');
+    var field = t.getAttribute('data-field');
+    if(!id || !field) return;
+    var task = sc.tasks.find(function(x){ return x.id === id; });
+    if(!task) return;
+    if(field === 'name') task.name = t.value;
+    else if(field === 'date' && t.value) task.date = t.value;
+    saveState(); renderTimeline(); renderCalendar();
+  });
+
+  // ---------- tabs ----------
+  var tabs = [
+    {btn: document.getElementById('tabBtnRoster'), panel: document.getElementById('panelRoster')},
+    {btn: document.getElementById('tabBtnSchedule'), panel: document.getElementById('panelSchedule')}
+  ];
+  tabs.forEach(function(t){
+    t.btn.addEventListener('click', function(){
+      tabs.forEach(function(o){
+        o.btn.classList.toggle('active', o === t);
+        o.panel.classList.toggle('active', o === t);
+      });
+    });
+  });
+
+  var syncStatus = document.getElementById('syncStatus');
+  var syncStatusTimer = null;
+  function showSyncStatus(msg){
+    syncStatus.textContent = msg;
+    clearTimeout(syncStatusTimer);
+    syncStatusTimer = setTimeout(function(){ syncStatus.textContent = ''; }, 4000);
+  }
+
+  document.getElementById('refreshBtn').addEventListener('click', async function(){
+    var ok = await refreshFromRemote();
+    if(ok){
+      syncFiscalYear();
+      renderAll();
+      showSyncStatus('最新の状態に更新しました');
+    } else {
+      showSyncStatus('取得できませんでした。今の内容はそのまま保持されています。');
+    }
+  });
+
+  // ---------- init ----------
+  (async function init(){
+    await loadInitial();
+    syncFiscalYear();
+    renderAll();
+  })();
+
+})();
+</script>
+</body>
+</html>
