@@ -238,6 +238,11 @@
   .role-cell label{display:flex; align-items:center; gap:5px; font-size:12px; color:var(--ink-soft); cursor:pointer;}
   .role-cell input[type=checkbox]{width:auto; accent-color:var(--hanko);}
 
+  .succ-cell{display:flex; flex-direction:column; gap:8px; min-width:190px;}
+  .succ-row{display:flex; flex-direction:column; gap:3px;}
+  .succ-role{font-size:11px; color:var(--ink-soft); letter-spacing:.02em;}
+  .succ-row select, .succ-row input[type=text]{font-size:12.5px; padding:5px 6px;}
+
   footer.note{
     max-width:1040px; margin:26px auto 0; padding:0 18px; font-size:11.5px; color:#7C8798;
   }
@@ -393,7 +398,7 @@
 
   // ---------- state ----------
   // ↓ここをデプロイしたGASウェブアプリのURLに書き換えてください
-  var GAS_URL = 'https://script.google.com/macros/s/AKfycbxq5sG13UXe_juK63JmN6MbG4AV4W3s5LmD7Ez1R4gBUaoaY4pEUC8t5jbzt6_oFI_oWw/exec';
+  var GAS_URL = 'https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXX/exec';
   var state = null;
 
   function defaultState(){
@@ -405,8 +410,8 @@
         {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false}
       ],
       members: [
-        {id:uid(), name:'山田 太郎', roleIds:[r1], continueType:'thisYear', untilYear:currentFY, successor:'', note:''},
-        {id:uid(), name:'佐藤 花子', roleIds:[r2], continueType:'untilYear', untilYear:currentFY+1, successor:'', note:''}
+        {id:uid(), name:'山田 太郎', roleIds:[r1], continueType:'thisYear', untilYear:currentFY, successors:{}, note:''},
+        {id:uid(), name:'佐藤 花子', roleIds:[r2], continueType:'untilYear', untilYear:currentFY+1, successors:{}, note:''}
       ],
       schedules: []
     };
@@ -433,6 +438,15 @@
         m.roleIds = m.roleId ? [m.roleId] : [];
       }
       delete m.roleId;
+      if(!m.successors){
+        m.successors = {};
+        if(m.successor && m.successor.trim()){
+          m.roleIds.forEach(function(rid){
+            m.successors[rid] = {type:'text', value:m.successor.trim()};
+          });
+        }
+      }
+      delete m.successor;
     });
     return s;
   }
@@ -572,18 +586,20 @@
     var abolishedRoleIds = {};
     state.roles.forEach(function(r){ if(r.abolishNextYear) abolishedRoleIds[r.id] = true; });
 
-    state.members = state.members.filter(function(m){
-      if(m.continueType === 'indefinite') return true;
-      if(m.continueType === 'untilYear') return Number(m.untilYear) >= incoming;
-      return false; // 'thisYear'（継続予定なし）は退任として名簿から外れる
+    var remainingIds = {};
+    state.members.forEach(function(m){
+      var stays = m.continueType === 'indefinite' ||
+        (m.continueType === 'untilYear' && Number(m.untilYear) >= incoming);
+      if(stays) remainingIds[m.id] = true;
     });
+    state.members = state.members.filter(function(m){ return remainingIds[m.id]; });
     state.members.forEach(function(m){
       // 継続期限がちょうど新年度に到達した人は「今年度いっぱい」に自動で切り替える
       if(m.continueType === 'untilYear' && Number(m.untilYear) === incoming){
         m.continueType = 'thisYear';
       }
       m.roleIds = (m.roleIds||[]).filter(function(rid){ return !abolishedRoleIds[rid]; });
-      m.successor = '';
+      m.successors = {}; // 新年度の引き継ぎ状況はまっさらな状態から
     });
 
     state.roles = state.roles.filter(function(r){ return !r.abolishNextYear; });
@@ -661,6 +677,36 @@
     }).join('') + '</div>';
   }
 
+  function successorCellHTML(m){
+    var ct = m.continueType || 'thisYear';
+    if(ct !== 'thisYear'){
+      return '<div class="empty-note" style="padding:4px 0;">（継続のため不要）</div>';
+    }
+    var roles = (m.roleIds||[]).map(function(rid){
+      return state.roles.find(function(r){ return r.id === rid; });
+    }).filter(Boolean);
+    if(roles.length === 0){
+      return '<div class="empty-note" style="padding:4px 0;">（担当役割未設定）</div>';
+    }
+    var succ = m.successors || {};
+    return '<div class="succ-cell">' + roles.map(function(role){
+      var entry = succ[role.id] || {type:'', value:''};
+      var isManual = entry.type === 'text';
+      var options = '<option value="">未定</option>';
+      state.members.forEach(function(other){
+        if(other.id === m.id) return;
+        var sel = entry.type === 'member' && entry.value === other.id;
+        options += '<option value="'+other.id+'" '+(sel?'selected':'')+'>'+esc(other.name || '（未入力）')+'</option>';
+      });
+      options += '<option value="__manual__" '+(isManual?'selected':'')+'>その他（手入力）</option>';
+      return '<div class="succ-row">' +
+        '<span class="succ-role">'+esc(role.name||'（名称未設定）')+'</span>' +
+        '<select data-field="successorSel" data-id="'+m.id+'" data-role="'+role.id+'">'+options+'</select>' +
+        (isManual ? '<input type="text" data-field="successorText" data-id="'+m.id+'" data-role="'+role.id+'" value="'+esc(entry.value||'')+'" placeholder="氏名を入力">' : '') +
+      '</div>';
+    }).join('') + '</div>';
+  }
+
   function renderMembers(){
     if(state.members.length === 0){
       membersBody.innerHTML = '<tr><td colspan="5" class="empty-note">まだメンバーが登録されていません。「＋ メンバーを追加」から始めましょう。</td></tr>';
@@ -670,7 +716,6 @@
       var ct = m.continueType || 'thisYear';
       var isUntil = ct === 'untilYear';
       var isIndef = ct === 'indefinite';
-      var noSuccessorNeeded = isUntil || isIndef;
       return '' +
       '<tr data-member-id="'+m.id+'">' +
         '<td><input type="text" data-field="name" data-id="'+m.id+'" value="'+esc(m.name)+'" placeholder="氏名"></td>' +
@@ -682,7 +727,7 @@
           '</label>' +
           '<label><input type="radio" name="ct-'+m.id+'" data-field="continueType" data-value="indefinite" data-id="'+m.id+'" '+(isIndef?'checked':'')+'> 来年度も継続予定（時期未定）</label>' +
         '</div></td>' +
-        '<td><input type="text" data-field="successor" data-id="'+m.id+'" value="'+esc(m.successor||'')+'" placeholder="'+(noSuccessorNeeded?'（継続のため不要）':'例：鈴木 一郎')+'" '+(noSuccessorNeeded?'disabled':'')+'></td>' +
+        '<td>'+successorCellHTML(m)+'</td>' +
         '<td><input type="text" data-field="note" data-id="'+m.id+'" value="'+esc(m.note||'')+'" placeholder="任意"></td>' +
         '<td><button class="icon-btn" data-action="deleteMember" data-id="'+m.id+'" title="削除">✕</button></td>' +
       '</tr>';
@@ -846,9 +891,18 @@
         } else if(isIndef){
           chain = '<span class="handoff-name stay">'+esc(m.name||'（未入力）')+'（留任・時期未定）</span>';
         } else {
-          var succ = (m.successor||'').trim();
+          var entry = (m.successors && m.successors[role.id]) || null;
+          var succLabel = '';
+          if(entry){
+            if(entry.type === 'member'){
+              var otherM = state.members.find(function(o){ return o.id === entry.value; });
+              succLabel = otherM ? esc(otherM.name || '（未入力）') : '';
+            } else if(entry.type === 'text'){
+              succLabel = esc((entry.value||'').trim());
+            }
+          }
           chain = '<span class="handoff-name leaving">'+esc(m.name||'（未入力）')+'</span> <span class="handoff-arrow">→</span> ' +
-            (succ ? '<span class="handoff-name">'+esc(succ)+'</span>' : '<span class="handoff-name tbd">後任未定</span>');
+            (succLabel ? '<span class="handoff-name">'+succLabel+'</span>' : '<span class="handoff-name tbd">後任未定</span>');
         }
         rows.push({role:role, chain:chain});
       });
@@ -880,7 +934,7 @@
     saveState(); renderAll();
   });
   document.getElementById('addMemberBtn').addEventListener('click', function(){
-    state.members.push({id:uid(), name:'', roleIds:[], continueType:'thisYear', untilYear:currentFY, successor:'', note:''});
+    state.members.push({id:uid(), name:'', roleIds:[], continueType:'thisYear', untilYear:currentFY, successors:{}, note:''});
     saveState(); renderAll();
   });
   scheduleTabsWrap.addEventListener('click', function(e){
@@ -965,6 +1019,14 @@
     if(!btn) return;
     var id = btn.getAttribute('data-id');
     state.members = state.members.filter(function(m){ return m.id !== id; });
+    // 削除したメンバーを後任に指定していた参照もクリア
+    state.members.forEach(function(m){
+      if(!m.successors) return;
+      Object.keys(m.successors).forEach(function(rid){
+        var entry = m.successors[rid];
+        if(entry && entry.type === 'member' && entry.value === id) delete m.successors[rid];
+      });
+    });
     saveState(); renderAll();
   });
   membersBody.addEventListener('change', function(e){
@@ -976,7 +1038,18 @@
     if(!member) return;
     if(field === 'name') member.name = t.value;
     else if(field === 'note') member.note = t.value;
-    else if(field === 'successor') member.successor = t.value;
+    else if(field === 'successorSel'){
+      var rid1 = t.getAttribute('data-role');
+      member.successors = member.successors || {};
+      if(t.value === '') delete member.successors[rid1];
+      else if(t.value === '__manual__') member.successors[rid1] = {type:'text', value:(member.successors[rid1] && member.successors[rid1].value) || ''};
+      else member.successors[rid1] = {type:'member', value:t.value};
+    }
+    else if(field === 'successorText'){
+      var rid2 = t.getAttribute('data-role');
+      member.successors = member.successors || {};
+      member.successors[rid2] = {type:'text', value:t.value};
+    }
     else if(field === 'roleIds'){
       var rid = t.getAttribute('data-role');
       member.roleIds = member.roleIds || [];
