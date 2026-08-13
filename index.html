@@ -178,6 +178,50 @@
   .handoff-arrow{color:var(--gold); font-weight:700;}
   .handoff-name.tbd{color:var(--hanko); border-color:var(--hanko); font-weight:700; text-decoration:none;}
   .handoff-name.stay{border-color:var(--ok); color:var(--ok);}
+  .team-members{
+    width:100%; margin-top:2px; font-size:12px; color:var(--ink-soft);
+    display:flex; gap:6px; flex-wrap:wrap; align-items:center;
+  }
+  .team-members .handoff-name{font-size:11.5px; padding:1px 7px;}
+  .handoff-name.recruit{
+    border-color:var(--gold); color:#8A6A1E; display:inline-flex; align-items:center; gap:5px;
+  }
+  .recruit-remove{
+    border:none; background:none; color:inherit; cursor:pointer; font-size:12px;
+    line-height:1; padding:0; opacity:.7;
+  }
+  .recruit-remove:hover{opacity:1;}
+  .recruit-block{gap:8px;}
+  .recruit-add{display:inline-flex; gap:6px; align-items:center; margin-left:4px;}
+  .recruit-input{
+    font-size:12px; padding:4px 8px; border:1px solid var(--paper-line);
+    background:var(--paper); min-width:160px;
+  }
+  .recruit-add button{
+    font-size:11.5px; padding:4px 9px; border:1px solid var(--gold); background:var(--paper);
+    color:var(--ink); cursor:pointer;
+  }
+  .recruit-add button:hover{background:var(--paper-alt);}
+
+  .org-notes-block{margin-bottom:18px;}
+  .org-notes-label{display:block; font-size:12px; color:var(--ink-soft); margin-bottom:6px; font-weight:600;}
+  #orgNotesInput{
+    width:100%; font-size:13px; padding:10px 12px; border:1px solid var(--paper-line);
+    background:var(--paper-alt); resize:vertical; font-family:inherit; line-height:1.6;
+  }
+  .role-note-item{
+    padding:14px 0; border-top:1px solid var(--paper-line);
+  }
+  .role-note-item:first-child{border-top:none; padding-top:4px;}
+  .role-note-head{font-size:14px; font-weight:700; margin-bottom:8px;}
+  .role-note-item textarea{
+    width:100%; font-size:13px; padding:8px 10px; border:1px solid var(--paper-line);
+    background:var(--paper); resize:vertical; font-family:inherit; line-height:1.6; margin-bottom:6px;
+  }
+  .role-note-item input[type=text]{
+    width:100%; font-size:12.5px; padding:7px 10px; border:1px solid var(--paper-line); background:var(--paper);
+  }
+  .role-note-period-label{font-size:11px; color:var(--ink-soft); display:block; margin-bottom:3px;}
   .sync-bar{
     display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
     background:var(--ink); border:1px solid var(--gold); padding:8px 14px; margin:16px 0 4px;
@@ -360,6 +404,20 @@
       </div>
       <div id="shortageSummary" class="shortage-summary"></div>
     </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>仕事内容メモ</h2>
+          <div class="hint">役職ごとの仕事内容や実施時期、執行部全体の心得を書き残せます。次の担当者への引き継ぎにお使いください。</div>
+        </div>
+      </div>
+      <div class="org-notes-block">
+        <label class="org-notes-label">執行部全体の心得・共通の仕事内容</label>
+        <textarea id="orgNotesInput" rows="3" placeholder="例：定例会は毎月第2土曜10時〜。会計処理は毎月末までに提出。緊急連絡はLINEグループで。"></textarea>
+      </div>
+      <div id="roleNotesWrap"></div>
+    </div>
   </section>
 
   <!-- SCHEDULE PANEL -->
@@ -420,9 +478,10 @@
     var r1 = uid(), r2 = uid();
     return {
       baseFiscalYear: fiscalYearOf(today),
+      orgNotes: '',
       roles: [
-        {id:r1, name:'会長', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:true},
-        {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false, flexible:false, individualHandoff:false}
+        {id:r1, name:'会長', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:true, nextYearRecruits:[], description:'', periodNote:''},
+        {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false, flexible:false, individualHandoff:false, nextYearRecruits:[], description:'', periodNote:''}
       ],
       members: [
         {id:uid(), name:'山田 太郎', roleIds:[r1], continueType:'thisYear', untilYear:currentFY, successors:{}, note:''},
@@ -436,6 +495,7 @@
   function migrateState(s){
     var hasLegacy = s.scheduleTargetDate || (s.scheduleTasks && s.scheduleTasks.length);
     if(!s.schedules) s.schedules = [];
+    if(typeof s.orgNotes !== 'string') s.orgNotes = '';
     delete s.history; // 過去バージョンで保存されていた履歴データは個人情報のため破棄
     if(s.schedules.length === 0 && hasLegacy){
       s.schedules.push({
@@ -451,6 +511,12 @@
     (s.roles || []).forEach(function(r){
       if(typeof r.flexible !== 'boolean') r.flexible = false;
       if(typeof r.individualHandoff !== 'boolean') r.individualHandoff = (r.neededNextYear || 0) <= 1;
+      if(!Array.isArray(r.nextYearRecruits)) r.nextYearRecruits = [];
+      r.nextYearRecruits = r.nextYearRecruits.map(function(x){
+        return (typeof x === 'string') ? {type:'text', value:x} : x;
+      });
+      if(typeof r.description !== 'string') r.description = '';
+      if(typeof r.periodNote !== 'string') r.periodNote = '';
     });
     (s.members || []).forEach(function(m){
       if(!m.roleIds){
@@ -565,6 +631,8 @@
   var membersBody = document.getElementById('membersBody');
   var loadWarning = document.getElementById('loadWarning');
   var shortageSummary = document.getElementById('shortageSummary');
+  var roleNotesWrap = document.getElementById('roleNotesWrap');
+  var orgNotesInput = document.getElementById('orgNotesInput');
   var scheduleTabsWrap = document.getElementById('scheduleTabs');
   var scheduleEditorWrap = document.getElementById('scheduleEditor');
   var timelineWrap = document.getElementById('timelineWrap');
@@ -592,7 +660,8 @@
       var msg = currentFY + '年度から' + v + '年度に切り替えます。\n' +
         '・継続予定なし（今年度いっぱい）の人 → 退任として名簿から外れます（元には戻せません）\n' +
         '・◯◯年度まで継続の人 → その年度まではそのまま名簿に残ります\n' +
-        '・継続予定（何年度までかは未定）／未確認の人 → そのまま名簿に残ります\n\n' +
+        '・継続予定（何年度までかは未定）／未確認の人 → そのまま名簿に残ります\n' +
+        '・チーム制の役割の「新規加入予定」に書いた人 → 正式なメンバーとして名簿に追加されます\n\n' +
         'よろしいですか？';
       if(!window.confirm(msg)){ fyInput.value = currentFY; return; }
       advanceFiscalYearTo(v);
@@ -632,6 +701,28 @@
       m.successors = {}; // 新年度の引き継ぎ状況はまっさらな状態から
     });
 
+    // 「来年度からの新規加入予定」に登録されていた人を反映する。
+    // 既存メンバーを選んでいた場合はその人にこの役割を追加、手入力の場合は新規メンバーとして名簿に追加する。
+    state.roles.forEach(function(r){
+      var recruits = r.nextYearRecruits || [];
+      recruits.forEach(function(entry){
+        if(abolishedRoleIds[r.id]) return; // 役割ごと廃止される場合は追加しない
+        if(entry.type === 'member'){
+          var existing = state.members.find(function(m){ return m.id === entry.value; });
+          if(existing){
+            existing.roleIds = existing.roleIds || [];
+            if(existing.roleIds.indexOf(r.id) === -1) existing.roleIds.push(r.id);
+          }
+        } else if(entry.type === 'text' && entry.value){
+          state.members.push({
+            id:uid(), name:entry.value, roleIds:[r.id], continueType:'unconfirmed',
+            untilYear:incoming, successors:{}, note:''
+          });
+        }
+      });
+      r.nextYearRecruits = [];
+    });
+
     state.roles = state.roles.filter(function(r){ return !r.abolishNextYear; });
 
     state.baseFiscalYear = incoming;
@@ -646,6 +737,11 @@
     });
   }
 
+  function effectiveNextYearCount(role){
+    var stats = roleStats(role);
+    return stats.nextYear + ((role.nextYearRecruits || []).length);
+  }
+
   function renderRoles(){
     if(state.roles.length === 0){
       rolesBody.innerHTML = '<tr><td colspan="8" class="empty-note">まだ役割が登録されていません。「＋ 役割を追加」から始めましょう。</td></tr>';
@@ -655,14 +751,15 @@
         var abolished = role.abolishNextYear;
         var flexible = !!role.flexible;
         var individualHandoff = !!role.individualHandoff;
-        var short = !abolished && !flexible && stats.nextYear < role.neededNextYear;
+        var effNextYear = effectiveNextYearCount(role);
+        var short = !abolished && !flexible && effNextYear < role.neededNextYear;
         var badge;
         if(abolished){
           badge = '<span class="badge neutral">廃止予定</span>';
         } else if(flexible){
           badge = '<span class="badge neutral">随時対応</span>';
         } else if(short){
-          badge = '<span class="badge short">不足 (あと' + (role.neededNextYear - stats.nextYear) + '名)</span>';
+          badge = '<span class="badge short">不足 (あと' + (role.neededNextYear - effNextYear) + '名)</span>';
         } else {
           badge = '<span class="badge ok">充足</span>';
         }
@@ -685,8 +782,7 @@
 
     var shorts = state.roles.filter(function(role){
       if(role.abolishNextYear || role.flexible) return false;
-      var s = roleStats(role);
-      return s.nextYear < role.neededNextYear;
+      return effectiveNextYearCount(role) < role.neededNextYear;
     });
     if(shorts.length === 0){
       shortageSummary.className = 'shortage-summary none';
@@ -727,7 +823,7 @@
     var singleRoles = heldRoles.filter(isSingleRole);
     var otherCount = heldRoles.length - singleRoles.length;
     if(singleRoles.length === 0){
-      return '<div class="empty-note" style="padding:4px 0;">（チーム制・随時対応の役割のみのため個別指定は不要）</div>';
+      return '<div class="empty-note" style="padding:4px 0;">（チーム制・随時対応の役割のみのため個別指定は不要。担当の変更は左の「担当役割」欄で）</div>';
     }
     var succ = m.successors || {};
     var rowsHtml = singleRoles.map(function(role){
@@ -748,7 +844,7 @@
         (isManual ? '<input type="text" data-field="successorText" data-id="'+m.id+'" data-role="'+role.id+'" value="'+esc(entry.value||'')+'" placeholder="氏名を入力">' : '') +
       '</div>';
     }).join('');
-    var note = otherCount > 0 ? '<div class="succ-note">ほか'+otherCount+'件（チーム制・随時対応）は個別指定不要</div>' : '';
+    var note = otherCount > 0 ? '<div class="succ-note">ほか'+otherCount+'件（チーム制・随時対応）は個別指定不要。担当の変更は「担当役割」欄で</div>' : '';
     return '<div class="succ-cell">' + rowsHtml + note + '</div>';
   }
 
@@ -910,6 +1006,58 @@
 
   var handoffList = document.getElementById('handoffList');
 
+  function addRecruit(roleId){
+    var select = handoffList.querySelector('.recruit-select[data-role="'+roleId+'"]');
+    if(!select) return;
+    var role = state.roles.find(function(r){ return r.id === roleId; });
+    if(!role) return;
+    role.nextYearRecruits = role.nextYearRecruits || [];
+
+    if(select.value === '__manual__'){
+      var manualInput = handoffList.querySelector('.recruit-manual-input[data-role="'+roleId+'"]');
+      var name = manualInput ? manualInput.value.trim() : '';
+      if(!name) return;
+      role.nextYearRecruits.push({type:'text', value:name});
+    } else if(select.value){
+      var already = role.nextYearRecruits.some(function(r){ return r.type === 'member' && r.value === select.value; });
+      if(already) return;
+      role.nextYearRecruits.push({type:'member', value:select.value});
+    } else {
+      return;
+    }
+    saveState(); renderAll();
+  }
+
+  handoffList.addEventListener('click', function(e){
+    var addBtn = e.target.closest('[data-action="addRecruit"]');
+    if(addBtn){
+      addRecruit(addBtn.getAttribute('data-role'));
+      return;
+    }
+    var rmBtn = e.target.closest('[data-action="removeRecruit"]');
+    if(rmBtn){
+      var roleId2 = rmBtn.getAttribute('data-role');
+      var idx = parseInt(rmBtn.getAttribute('data-idx'), 10);
+      var role2 = state.roles.find(function(r){ return r.id === roleId2; });
+      if(role2 && role2.nextYearRecruits) role2.nextYearRecruits.splice(idx, 1);
+      saveState(); renderAll();
+    }
+  });
+  handoffList.addEventListener('change', function(e){
+    if(e.target.classList.contains('recruit-select')){
+      var roleId = e.target.getAttribute('data-role');
+      var manualInput = handoffList.querySelector('.recruit-manual-input[data-role="'+roleId+'"]');
+      if(manualInput) manualInput.style.display = (e.target.value === '__manual__') ? '' : 'none';
+    }
+  });
+  handoffList.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' && e.target.classList.contains('recruit-manual-input')){
+      e.preventDefault();
+      addRecruit(e.target.getAttribute('data-role'));
+    }
+
+  });
+
   function roleHandoffChain(role, m){
     var ct = m.continueType || 'unconfirmed';
     if(role.abolishNextYear){
@@ -968,18 +1116,62 @@
           rows.push({role:role, chain:roleHandoffChain(role, m), team:false});
         });
       } else {
-        // チーム制の役割: 個人同士のペアリングではなく、人数の充足状況だけをまとめて表示
+        // チーム制の役割: 個人同士のペアリングではなく、人数の充足状況をまとめて表示。
+        // 「誰が今その役についているか」に加え、「来年度からの新規加入予定」も名前で書き留められるようにする。
         var stats = roleStats(role);
         var need = role.neededNextYear || 0;
+        var recruits = role.nextYearRecruits || [];
+        var effectiveNextYear = effectiveNextYearCount(role);
         var unconfirmedCount = mems.filter(function(m){ return (m.continueType||'unconfirmed') === 'unconfirmed'; }).length;
         var chain;
         if(role.abolishNextYear){
           chain = '<span class="handoff-name stay">（役割ごと廃止予定・現在'+stats.current+'名）</span>';
         } else {
-          var shortfall = need - stats.nextYear;
-          chain = '来年度 継続予定 <b>'+stats.nextYear+'名</b> ／ 必要 '+need+'名';
+          var shortfall = need - effectiveNextYear;
+          chain = '来年度 継続予定 <b>'+stats.nextYear+'名</b>' +
+            (recruits.length > 0 ? ' ＋ 新規予定 <b>'+recruits.length+'名</b>' : '') +
+            ' ／ 必要 '+need+'名';
           if(unconfirmedCount > 0) chain += ' <span class="handoff-name tbd">未確認'+unconfirmedCount+'名あり</span>';
           if(shortfall > 0) chain += ' <span class="handoff-name tbd">あと'+shortfall+'名募集</span>';
+        }
+        if(mems.length > 0){
+          var memberTags = mems.map(function(m){
+            var ct = m.continueType || 'unconfirmed';
+            var statusClass = 'stay', statusLabel;
+            if(ct === 'unconfirmed'){ statusLabel = '未確認'; statusClass = 'tbd'; }
+            else if(ct === 'thisYear'){ statusLabel = '退任予定'; statusClass = 'leaving'; }
+            else if(ct === 'untilYear'){ statusLabel = m.untilYear+'年度まで継続'; }
+            else { statusLabel = '継続予定'; }
+            return '<span class="handoff-name '+statusClass+'">'+esc(m.name||'（未入力）')+'（'+statusLabel+'）</span>';
+          }).join('、');
+          chain += '<div class="team-members">現在の担当：'+memberTags+'</div>';
+        }
+        if(!role.abolishNextYear){
+          var recruitTags = recruits.map(function(entry, idx){
+            var label;
+            if(entry.type === 'member'){
+              var mm = state.members.find(function(x){ return x.id === entry.value; });
+              label = mm ? (mm.name || '（未入力）') : '（削除済みメンバー）';
+            } else {
+              label = entry.value;
+            }
+            return '<span class="handoff-name recruit">'+esc(label)+'<button type="button" class="recruit-remove" data-action="removeRecruit" data-role="'+role.id+'" data-idx="'+idx+'" title="削除">×</button></span>';
+          }).join('');
+          var memberOptions = state.members.map(function(m){
+            return '<option value="'+m.id+'">'+esc(m.name||'（未入力）')+'</option>';
+          }).join('');
+          chain += '<div class="team-members recruit-block">' +
+            '来年度からの新規加入予定：' + (recruitTags || '<span class="succ-note">まだありません</span>') +
+            '<span class="recruit-add">' +
+              '<select class="recruit-select" data-role="'+role.id+'">' +
+                '<option value="">既存メンバーから選ぶ</option>' +
+                memberOptions +
+                '<option value="__manual__">新しい人（手入力）</option>' +
+              '</select>' +
+              '<input type="text" class="recruit-manual-input" data-role="'+role.id+'" placeholder="氏名を入力" style="display:none;">' +
+              '<button type="button" data-action="addRecruit" data-role="'+role.id+'">＋追加</button>' +
+            '</span>' +
+          '</div>';
         }
         rows.push({role:role, chain:chain, team:true});
       }
@@ -994,6 +1186,25 @@
     }).join('');
   }
 
+  function renderRoleNotes(){
+    if(document.activeElement !== orgNotesInput){
+      orgNotesInput.value = state.orgNotes || '';
+    }
+    if(state.roles.length === 0){
+      roleNotesWrap.innerHTML = '<div class="empty-note">役割を登録すると、ここに仕事内容メモを書けます。</div>';
+      return;
+    }
+    roleNotesWrap.innerHTML = state.roles.map(function(role){
+      return '' +
+      '<div class="role-note-item" data-role-id="'+role.id+'">' +
+        '<div class="role-note-head">'+esc(role.name || '（名称未設定）')+'</div>' +
+        '<textarea rows="2" data-field="description" data-id="'+role.id+'" placeholder="仕事内容（例：月1回の会報作成、行事写真の撮影など）">'+esc(role.description||'')+'</textarea>' +
+        '<span class="role-note-period-label">実施時期・任期の目安</span>' +
+        '<input type="text" data-field="periodNote" data-id="'+role.id+'" value="'+esc(role.periodNote||'')+'" placeholder="例：4〜6月のみ／通年／運動会前後">' +
+      '</div>';
+    }).join('');
+  }
+
   function renderAll(){
     ensureActiveSchedule();
     renderRoles();
@@ -1003,11 +1214,28 @@
     renderScheduleEditor();
     renderTimeline();
     renderCalendar();
+    renderRoleNotes();
   }
 
   // ---------- events ----------
+  roleNotesWrap.addEventListener('change', function(e){
+    var t = e.target;
+    var id = t.getAttribute('data-id');
+    var field = t.getAttribute('data-field');
+    if(!id || !field) return;
+    var role = state.roles.find(function(r){ return r.id === id; });
+    if(!role) return;
+    if(field === 'description') role.description = t.value;
+    else if(field === 'periodNote') role.periodNote = t.value;
+    saveState();
+  });
+  orgNotesInput.addEventListener('change', function(){
+    state.orgNotes = orgNotesInput.value;
+    saveState();
+  });
+
   document.getElementById('addRoleBtn').addEventListener('click', function(){
-    state.roles.push({id:uid(), name:'', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:false});
+    state.roles.push({id:uid(), name:'', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:false, nextYearRecruits:[], description:'', periodNote:''});
     saveState(); renderAll();
   });
   document.getElementById('addMemberBtn').addEventListener('click', function(){
