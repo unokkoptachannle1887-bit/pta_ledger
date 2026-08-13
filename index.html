@@ -337,7 +337,7 @@
       <div class="card-head">
         <div>
           <h2>役割一覧</h2>
-          <div class="hint">来年度に必要な人数と、廃止予定の役割を管理します。</div>
+          <div class="hint">来年度に必要な人数と、廃止予定の役割を管理します。「個別後任」は会長など、誰から誰に引き継ぐかを具体的に決めたい役職だけONにしてください。</div>
         </div>
         <button class="btn primary" id="addRoleBtn">＋ 役割を追加</button>
       </div>
@@ -345,9 +345,10 @@
         <table id="rolesTable">
           <thead>
             <tr>
-              <th style="width:28%">役割名</th>
+              <th style="width:24%">役割名</th>
               <th>現員数</th>
               <th>来年度必要人数</th>
+              <th>個別後任<br><span style="font-weight:400; font-size:10px;">(誰から誰かを指定)</span></th>
               <th>随時対応<br><span style="font-weight:400; font-size:10px;">(人数管理しない)</span></th>
               <th>廃止予定</th>
               <th>状態</th>
@@ -412,7 +413,7 @@
 
   // ---------- state ----------
   // ↓ここをデプロイしたGASウェブアプリのURLに書き換えてください
-  var GAS_URL = 'https://script.google.com/macros/s/AKfycbxq5sG13UXe_juK63JmN6MbG4AV4W3s5LmD7Ez1R4gBUaoaY4pEUC8t5jbzt6_oFI_oWw/exec';
+  var GAS_URL = 'https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXX/exec';
   var state = null;
 
   function defaultState(){
@@ -420,8 +421,8 @@
     return {
       baseFiscalYear: fiscalYearOf(today),
       roles: [
-        {id:r1, name:'会長', neededNextYear:1, abolishNextYear:false, flexible:false},
-        {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false, flexible:false}
+        {id:r1, name:'会長', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:true},
+        {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false, flexible:false, individualHandoff:false}
       ],
       members: [
         {id:uid(), name:'山田 太郎', roleIds:[r1], continueType:'thisYear', untilYear:currentFY, successors:{}, note:''},
@@ -449,6 +450,7 @@
     delete s.scheduleTasks;
     (s.roles || []).forEach(function(r){
       if(typeof r.flexible !== 'boolean') r.flexible = false;
+      if(typeof r.individualHandoff !== 'boolean') r.individualHandoff = (r.neededNextYear || 0) <= 1;
     });
     (s.members || []).forEach(function(m){
       if(!m.roleIds){
@@ -646,12 +648,13 @@
 
   function renderRoles(){
     if(state.roles.length === 0){
-      rolesBody.innerHTML = '<tr><td colspan="7" class="empty-note">まだ役割が登録されていません。「＋ 役割を追加」から始めましょう。</td></tr>';
+      rolesBody.innerHTML = '<tr><td colspan="8" class="empty-note">まだ役割が登録されていません。「＋ 役割を追加」から始めましょう。</td></tr>';
     } else {
       rolesBody.innerHTML = state.roles.map(function(role){
         var stats = roleStats(role);
         var abolished = role.abolishNextYear;
         var flexible = !!role.flexible;
+        var individualHandoff = !!role.individualHandoff;
         var short = !abolished && !flexible && stats.nextYear < role.neededNextYear;
         var badge;
         if(abolished){
@@ -671,6 +674,7 @@
           '</div></td>' +
           '<td class="num">'+stats.current+'</td>' +
           '<td class="num"><input type="number" min="0" data-field="neededNextYear" data-id="'+role.id+'" value="'+role.neededNextYear+'" '+(flexible?'disabled':'')+'></td>' +
+          '<td class="num"><input type="checkbox" data-field="individualHandoff" data-id="'+role.id+'" '+(individualHandoff?'checked':'')+' '+(flexible?'disabled':'')+'></td>' +
           '<td class="num"><input type="checkbox" data-field="flexible" data-id="'+role.id+'" '+(flexible?'checked':'')+'></td>' +
           '<td class="num"><input type="checkbox" data-field="abolishNextYear" data-id="'+role.id+'" '+(role.abolishNextYear?'checked':'')+'></td>' +
           '<td>'+badge+'</td>' +
@@ -710,7 +714,7 @@
   }
 
   function isSingleRole(role){
-    return !!role && !role.flexible && (role.neededNextYear || 0) <= 1;
+    return !!role && !role.flexible && !!role.individualHandoff;
   }
 
   function successorCellHTML(m){
@@ -1003,7 +1007,7 @@
 
   // ---------- events ----------
   document.getElementById('addRoleBtn').addEventListener('click', function(){
-    state.roles.push({id:uid(), name:'', neededNextYear:1, abolishNextYear:false, flexible:false});
+    state.roles.push({id:uid(), name:'', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:false});
     saveState(); renderAll();
   });
   document.getElementById('addMemberBtn').addEventListener('click', function(){
@@ -1085,6 +1089,7 @@
     else if(field === 'neededNextYear') role.neededNextYear = Math.max(0, parseInt(t.value,10) || 0);
     else if(field === 'abolishNextYear') role.abolishNextYear = t.checked;
     else if(field === 'flexible') role.flexible = t.checked;
+    else if(field === 'individualHandoff') role.individualHandoff = t.checked;
     saveState(); renderAll();
   });
 
