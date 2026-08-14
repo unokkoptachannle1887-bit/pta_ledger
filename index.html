@@ -234,8 +234,8 @@
   .team-count-row{border-top:none; padding-top:0; font-size:13px;}
   .team-label{display:block; font-size:11px; color:var(--ink-soft); font-weight:700; letter-spacing:.03em; margin-bottom:6px;}
   .preview-tags{display:flex; flex-wrap:wrap; gap:6px;}
-  .handoff-split{display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap;}
-  .split-col{display:flex; flex-wrap:wrap; gap:6px; align-items:center; flex:1 1 auto; min-width:0;}
+  .handoff-split{display:flex; align-items:center; gap:8px; flex-wrap:wrap; row-gap:8px;}
+  .split-col{display:flex; flex-wrap:wrap; gap:6px; align-items:center; flex:0 1 auto;}
   .handoff-split .handoff-arrow{align-self:center; flex-shrink:0;}
   .team-members{
     width:100%; margin-top:2px; font-size:12px; color:var(--ink-soft);
@@ -344,11 +344,11 @@
   }
 
   .role-cell{
-    display:flex; flex-direction:column; gap:3px; max-height:120px; overflow-y:auto;
-    min-width:170px; padding:9px 10px; background:var(--paper); border:1px solid var(--paper-line);
+    display:flex; flex-direction:column; gap:5px; max-height:340px; overflow-y:auto;
+    width:100%; padding:10px 12px; background:var(--paper); border:1px solid var(--paper-line);
   }
-  .role-cell label{display:flex; align-items:center; gap:5px; font-size:12px; color:var(--ink-soft); cursor:pointer;}
-  .role-cell input[type=checkbox]{width:auto; accent-color:var(--hanko);}
+  .role-cell label{display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink-soft); cursor:pointer; padding:3px 0;}
+  .role-cell input[type=checkbox]{width:auto; accent-color:var(--hanko); transform:scale(1.15);}
 
   .succ-cell{display:flex; flex-direction:column; gap:8px; min-width:190px;}
   .succ-row{
