@@ -234,6 +234,9 @@
   .team-count-row{border-top:none; padding-top:0; font-size:13px;}
   .team-label{display:block; font-size:11px; color:var(--ink-soft); font-weight:700; letter-spacing:.03em; margin-bottom:6px;}
   .preview-tags{display:flex; flex-wrap:wrap; gap:6px;}
+  .handoff-split{display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap;}
+  .split-col{display:flex; flex-wrap:wrap; gap:6px; align-items:center; flex:1 1 auto; min-width:0;}
+  .handoff-split .handoff-arrow{align-self:center; flex-shrink:0;}
   .team-members{
     width:100%; margin-top:2px; font-size:12px; color:var(--ink-soft);
     display:flex; gap:6px; flex-wrap:wrap; align-items:center;
@@ -274,6 +277,7 @@
   .role-note-body textarea{
     width:100%; font-size:13px; padding:8px 10px; border:1px solid var(--paper-line);
     background:var(--paper); resize:none; overflow:hidden; font-family:inherit; line-height:1.6; margin-bottom:6px;
+    min-height:2.6em;
   }
   .role-note-body input[type=text]{
     width:100%; font-size:12.5px; padding:7px 10px; border:1px solid var(--paper-line); background:var(--paper); margin-bottom:10px;
@@ -674,15 +678,27 @@
 
   // ---------- computed ----------
   function roleStats(role){
-    var current = 0, nextYear = 0;
+    var current = 0;
+    var continuingHolderIds = {};
+    var successorCandidateIds = {};
     state.members.forEach(function(m){
       if((m.roleIds||[]).indexOf(role.id) === -1) return;
       current++;
       var entry = (m.successors && m.successors[role.id]) || null;
       var leavingThisRoleOnly = entry && entry.type === 'leaving';
       if(leavingThisRoleOnly) return; // 本人は継続でも、この役割だけは退任予定
-      if(m.continueType === 'indefinite') nextYear++;
-      else if(m.continueType === 'untilYear' && Number(m.untilYear) >= nextFY) nextYear++;
+      var continuing = m.continueType === 'indefinite' ||
+        (m.continueType === 'untilYear' && Number(m.untilYear) >= nextFY);
+      if(continuing){
+        continuingHolderIds[m.id] = true;
+      } else if(entry && entry.type === 'member'){
+        // 本人は続かないが、個別に後任者が指名されている場合は来年度の人数として数える
+        successorCandidateIds[entry.value] = true;
+      }
+    });
+    var nextYear = Object.keys(continuingHolderIds).length;
+    Object.keys(successorCandidateIds).forEach(function(sid){
+      if(!continuingHolderIds[sid]) nextYear++;
     });
     return {current:current, nextYear:nextYear};
   }
@@ -722,6 +738,7 @@
         '・継続予定なし（今年度いっぱい）の人 → 退任として名簿から外れます（元には戻せません）\n' +
         '・◯◯年度まで継続の人 → その年度まではそのまま名簿に残ります\n' +
         '・継続予定（何年度までかは未定）／未確認の人 → そのまま名簿に残ります\n' +
+        '・個別後任で名前を指名済みの役割 → その人に役割が引き継がれます\n' +
         '・複数人制の役割の「新規加入予定」に書いた人 → 正式なメンバーとして名簿に追加されます\n\n' +
         'よろしいですか？';
       if(!window.confirm(msg)){ fyInput.value = currentFY; return; }
@@ -745,6 +762,17 @@
     var abolishedRoleIds = {};
     state.roles.forEach(function(r){ if(r.abolishNextYear) abolishedRoleIds[r.id] = true; });
 
+    // 退任予定者が個別に指名していた後任者(既存メンバー)を、名簿から消える前に控えておく
+    var namedSuccessorAssignments = [];
+    state.members.forEach(function(m){
+      Object.keys(m.successors || {}).forEach(function(rid){
+        var entry = m.successors[rid];
+        if(entry && entry.type === 'member' && entry.value){
+          namedSuccessorAssignments.push({memberId: entry.value, roleId: rid});
+        }
+      });
+    });
+
     var remainingIds = {};
     state.members.forEach(function(m){
       var stays = m.continueType === 'indefinite' ||
@@ -766,6 +794,15 @@
         return !abolishedRoleIds[rid] && !leavingRoleIds[rid];
       });
       m.successors = {}; // 新年度の引き継ぎ状況はまっさらな状態から
+    });
+
+    // 個別に指名されていた後任者に、実際にその役割を付与する
+    namedSuccessorAssignments.forEach(function(a){
+      if(abolishedRoleIds[a.roleId]) return;
+      var successor = state.members.find(function(m){ return m.id === a.memberId; });
+      if(!successor) return; // 後任者自身が既に名簿から外れている場合は何もしない
+      successor.roleIds = successor.roleIds || [];
+      if(successor.roleIds.indexOf(a.roleId) === -1) successor.roleIds.push(a.roleId);
     });
 
     // 「来年度からの新規加入予定」に登録されていた人を反映する。
@@ -1357,7 +1394,7 @@
       });
     });
 
-    function memberStatusTag(m, role){
+    function memberStatusInfo(m, role){
       var ct = m.continueType || 'unconfirmed';
       var entry = (m.successors && m.successors[role.id]) || null;
       var statusClass = 'stay', statusLabel;
@@ -1367,7 +1404,32 @@
       else if(entry && entry.type === 'undecided'){ statusLabel = 'この役割は未定'; statusClass = 'tbd'; }
       else if(ct === 'untilYear'){ statusLabel = m.untilYear+'年度まで継続'; }
       else { statusLabel = '継続予定'; }
-      return '<span class="handoff-name '+statusClass+'">'+esc(m.name||'（未入力）')+'（'+statusLabel+'）</span>';
+      return {cls:statusClass, label:statusLabel};
+    }
+    function memberStatusTag(m, role){
+      var info = memberStatusInfo(m, role);
+      return '<span class="handoff-name '+info.cls+'">'+esc(m.name||'（未入力）')+'（'+info.label+'）</span>';
+    }
+    // 現在の担当者を「退任予定（左）」と「来年度に残る・未定（右）」に分けて→でつなぐ
+    function splitMembersHtml(mems, role){
+      if(mems.length === 0) return '';
+      var leaving = [], undecided = [], staying = [];
+      mems.forEach(function(m){
+        var cls = memberStatusInfo(m, role).cls;
+        if(cls === 'leaving') leaving.push(m);
+        else if(cls === 'tbd') undecided.push(m);
+        else staying.push(m);
+      });
+      var groups = [];
+      if(leaving.length) groups.push(leaving.map(function(m){ return memberStatusTag(m, role); }).join(''));
+      if(undecided.length) groups.push(undecided.map(function(m){ return memberStatusTag(m, role); }).join(''));
+      if(staying.length) groups.push(staying.map(function(m){ return memberStatusTag(m, role); }).join(''));
+      if(groups.length <= 1){
+        return '<div class="preview-tags">'+mems.map(function(m){ return memberStatusTag(m, role); }).join('')+'</div>';
+      }
+      return '<div class="handoff-split">' +
+        groups.map(function(g){ return '<div class="split-col">'+g+'</div>'; }).join('<span class="handoff-arrow">→</span>') +
+      '</div>';
     }
 
     var rows = [];
@@ -1379,14 +1441,14 @@
       if(role.flexible){
         // 随時対応: 人数管理はしないが、一覧からは消さず「今誰がやっているか」を見せ、その場で担当者を追加できるようにする
         var flexMembersHtml = mems.length
-          ? mems.map(function(m){ return memberStatusTag(m, role); }).join('')
+          ? splitMembersHtml(mems, role)
           : '<span class="succ-note">担当者未設定（人数管理はしません）</span>';
         var flexMemberOptions = state.members
           .filter(function(m){ return (m.roleIds||[]).indexOf(role.id) === -1; })
           .map(function(m){ return '<option value="'+m.id+'">'+esc(m.name||'（未入力）')+'</option>'; })
           .join('');
         var chain =
-          '<div class="team-section"><span class="team-label">現在の担当</span><div class="preview-tags">'+flexMembersHtml+'</div></div>' +
+          '<div class="team-section"><span class="team-label">現在の担当</span>'+flexMembersHtml+'</div>' +
           '<div class="team-section"><span class="team-label">担当者を追加</span><span class="recruit-add">' +
             '<select class="flex-add-select" data-role="'+role.id+'">' +
               '<option value="">既存メンバーから選ぶ</option>' +
@@ -1430,8 +1492,7 @@
         var chain = '<div class="team-section team-count-row">'+countLine+'</div>';
 
         if(mems.length > 0){
-          var memberTags = mems.map(function(m){ return memberStatusTag(m, role); }).join('');
-          chain += '<div class="team-section"><span class="team-label">現在の担当</span><div class="preview-tags">'+memberTags+'</div></div>';
+          chain += '<div class="team-section"><span class="team-label">現在の担当</span>'+splitMembersHtml(mems, role)+'</div>';
         }
         if(!role.abolishNextYear){
           var recruitTags = recruits.map(function(entry, idx){
@@ -1498,7 +1559,7 @@
         '<div class="role-note-body" style="display:'+(isOpen?'block':'none')+';">' +
           '<textarea class="auto-grow" rows="2" data-field="description" data-id="'+role.id+'" placeholder="'+(role.isOrgWide?'執行部全体で共有しておきたいこと（例：定例会は毎月第2土曜10時〜。会計処理は毎月末までに提出。）':'仕事内容（例：月1回の会報作成、行事写真の撮影など）')+'">'+esc(role.description||'')+'</textarea>' +
           '<span class="role-note-period-label">実施時期・任期の目安</span>' +
-          '<textarea class="auto-grow" rows="1" data-field="periodNote" data-id="'+role.id+'" placeholder="例：4〜6月のみ／通年／運動会前後">'+esc(role.periodNote||'')+'</textarea>' +
+          '<textarea class="auto-grow" rows="2" data-field="periodNote" data-id="'+role.id+'" placeholder="例：4〜6月のみ／通年／運動会前後">'+esc(role.periodNote||'')+'</textarea>' +
           '<span class="role-note-period-label">関連資料のリンク（PDFなどをGoogleドライブ等で共有したURL）</span>' +
           '<input type="text" data-field="resourceLink" data-id="'+role.id+'" value="'+esc(role.resourceLink||'')+'" placeholder="例：https://drive.google.com/...">' +
         '</div>' +
