@@ -100,7 +100,17 @@
     padding:22px 22px 26px; margin-top:18px;
     box-shadow:0 10px 30px rgba(0,0,0,.28);
   }
+  .card.collapsed{padding-bottom:22px;}
+  .card.collapsed > .card-head{margin-bottom:0;}
+  .card.collapsed > .card-head ~ *{display:none !important;}
   .card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:10px;}
+  .card-toggle{
+    flex:1 1 auto; min-width:0; display:flex; align-items:flex-start; gap:10px;
+    background:none; border:none; text-align:left; cursor:pointer; padding:0; margin:0;
+    font-family:'Zen Kaku Gothic New',sans-serif;
+  }
+  .card-caret{font-size:12px; color:var(--gold); margin-top:5px; flex-shrink:0;}
+  .card-toggle:hover h2{color:var(--hanko);}
   .card-head h2{font-size:19px; color:var(--ink);}
   .card-head .hint{font-size:12px; color:var(--ink-soft); margin-top:4px;}
 
@@ -128,12 +138,21 @@
   .acc-toggle:hover .acc-title{color:var(--hanko);}
   .acc-title{font-family:'Shippori Mincho',serif; font-size:14.5px; font-weight:700; color:var(--ink);}
   .acc-summary{font-size:12px; color:var(--ink-soft);}
-  .acc-body{padding:6px 4px 18px 22px; display:flex; flex-direction:column; gap:14px;}
-  .acc-field label{display:block; font-size:11px; color:var(--ink-soft); font-weight:700; margin-bottom:5px; letter-spacing:.02em;}
-  .acc-field-row{display:flex; gap:16px; flex-wrap:wrap;}
-  .acc-field-row .acc-field{flex:1 1 140px;}
+  .acc-body{
+    background:var(--paper-alt); border-left:3px solid var(--gold);
+    margin:0 0 10px 10px; padding:16px 16px 18px 18px;
+    display:flex; flex-direction:column; gap:0;
+  }
+  .acc-field{padding:12px 0; border-bottom:1px solid var(--paper-line);}
+  .acc-field:last-child{border-bottom:none; padding-bottom:2px;}
+  .acc-field label{
+    display:block; font-size:11px; color:var(--gold); font-weight:700;
+    margin-bottom:7px; letter-spacing:.05em;
+  }
+  .acc-field-row{display:flex; gap:16px; flex-wrap:wrap; padding:12px 0; border-bottom:1px solid var(--paper-line);}
+  .acc-field-row .acc-field{flex:1 1 140px; padding:0; border-bottom:none;}
   .acc-static{font-family:'JetBrains Mono',monospace; font-size:14px; padding:5px 2px;}
-  .acc-check{display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink); cursor:pointer;}
+  .acc-check{display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink); cursor:pointer; padding:6px 0;}
   .acc-check input{width:auto; accent-color:var(--hanko);}
   .needed-tag{font-size:11px; color:var(--ink-soft); font-weight:700;}
   .num{font-family:'JetBrains Mono',monospace; text-align:center;}
@@ -165,7 +184,10 @@
   .icon-btn:disabled{opacity:.25; cursor:default;}
   .icon-btn:hover{color:var(--hanko);}
 
-  .continue-cell{display:flex; flex-direction:column; gap:4px; min-width:170px;}
+  .continue-cell{
+    display:flex; flex-direction:column; gap:4px; min-width:170px;
+    background:var(--paper); padding:10px 12px; border:1px solid var(--paper-line);
+  }
   .continue-cell label{display:flex; align-items:center; gap:5px; font-size:12px; color:var(--ink-soft); cursor:pointer;}
   .continue-cell input[type=radio]{width:auto; accent-color:var(--hanko);}
   .until-year-row{display:flex; align-items:center; gap:5px; font-size:12px;}
@@ -319,13 +341,16 @@
 
   .role-cell{
     display:flex; flex-direction:column; gap:3px; max-height:120px; overflow-y:auto;
-    min-width:170px; padding:2px;
+    min-width:170px; padding:9px 10px; background:var(--paper); border:1px solid var(--paper-line);
   }
   .role-cell label{display:flex; align-items:center; gap:5px; font-size:12px; color:var(--ink-soft); cursor:pointer;}
   .role-cell input[type=checkbox]{width:auto; accent-color:var(--hanko);}
 
   .succ-cell{display:flex; flex-direction:column; gap:8px; min-width:190px;}
-  .succ-row{display:flex; flex-direction:column; gap:3px;}
+  .succ-row{
+    display:flex; flex-direction:column; gap:3px;
+    background:var(--paper); padding:8px 10px; border:1px solid var(--paper-line);
+  }
   .succ-role{font-size:11px; color:var(--ink-soft); letter-spacing:.02em;}
   .succ-row select, .succ-row input[type=text]{font-size:12.5px; padding:5px 6px;}
   .succ-note{font-size:11px; color:var(--ink-soft); font-style:italic;}
@@ -379,10 +404,13 @@
 
     <div class="card">
       <div class="card-head">
-        <div>
-          <h2>メンバー一覧</h2>
-          <div class="hint">氏名・担当役割・続投予定を入力してください。</div>
-        </div>
+        <button type="button" class="card-toggle" data-action="toggleCard">
+          <span class="card-caret">▼</span>
+          <span>
+            <h2>メンバー一覧</h2>
+            <div class="hint">氏名・担当役割・続投予定を入力してください。</div>
+          </span>
+        </button>
         <button class="btn primary" id="addMemberBtn">＋ メンバーを追加</button>
       </div>
       <div id="membersBody" class="acc-list"></div>
@@ -390,30 +418,39 @@
 
     <div class="card">
       <div class="card-head">
-        <div>
-          <h2>来年度の見込み</h2>
-          <div class="hint">今の設定のまま年度を進めた場合、誰が残り・誰が抜けるかのプレビューです（実際にはまだ何も変わりません）。</div>
-        </div>
+        <button type="button" class="card-toggle" data-action="toggleCard">
+          <span class="card-caret">▼</span>
+          <span>
+            <h2>来年度の見込み</h2>
+            <div class="hint">今の設定のまま年度を進めた場合、誰が残り・誰が抜けるかのプレビューです（実際にはまだ何も変わりません）。</div>
+          </span>
+        </button>
       </div>
       <div id="nextYearPreview"></div>
     </div>
 
     <div class="card">
       <div class="card-head">
-        <div>
-          <h2>引き継ぎ一覧</h2>
-          <div class="hint">誰の役割が誰に引き継がれるか（退任予定者→後任予定者）をまとめます。</div>
-        </div>
+        <button type="button" class="card-toggle" data-action="toggleCard">
+          <span class="card-caret">▼</span>
+          <span>
+            <h2>引き継ぎ一覧</h2>
+            <div class="hint">誰の役割が誰に引き継がれるか（退任予定者→後任予定者）をまとめます。</div>
+          </span>
+        </button>
       </div>
       <div class="handoff-list" id="handoffList"></div>
     </div>
 
     <div class="card">
       <div class="card-head">
-        <div>
-          <h2>役割一覧</h2>
-          <div class="hint">来年度に必要な人数と、廃止予定の役割を管理します。「個別後任」は会長など、誰から誰に引き継ぐかを具体的に決めたい役職だけONにしてください。</div>
-        </div>
+        <button type="button" class="card-toggle" data-action="toggleCard">
+          <span class="card-caret">▼</span>
+          <span>
+            <h2>役割一覧</h2>
+            <div class="hint">来年度に必要な人数と、廃止予定の役割を管理します。「個別後任」は会長など、誰から誰に引き継ぐかを具体的に決めたい役職だけONにしてください。</div>
+          </span>
+        </button>
         <button class="btn primary" id="addRoleBtn">＋ 役割を追加</button>
       </div>
       <div id="rolesBody" class="acc-list"></div>
@@ -422,10 +459,13 @@
 
     <div class="card">
       <div class="card-head">
-        <div>
-          <h2>仕事内容メモ</h2>
-          <div class="hint">役職ごとの仕事内容や実施時期を書き残せます。執行部全体で共有したいことは、役割一覧で「執行部全体」にチェックした行にまとめて書いてください。次の担当者への引き継ぎにお使いください。行をタップすると開閉します。</div>
-        </div>
+        <button type="button" class="card-toggle" data-action="toggleCard">
+          <span class="card-caret">▼</span>
+          <span>
+            <h2>仕事内容メモ</h2>
+            <div class="hint">役職ごとの仕事内容や実施時期を書き残せます。執行部全体で共有したいことは、役割一覧で「執行部全体」にチェックした行にまとめて書いてください。次の担当者への引き継ぎにお使いください。行をタップすると開閉します。</div>
+          </span>
+        </button>
       </div>
       <div id="roleNotesWrap"></div>
     </div>
@@ -435,10 +475,13 @@
   <section class="panel" id="panelSchedule">
     <div class="card">
       <div class="card-head">
-        <div>
-          <h2>逆算スケジュール</h2>
-          <div class="hint">締切日・実施日から逆算して、準備の目安を組み立てます。いくつでも作成できます。</div>
-        </div>
+        <button type="button" class="card-toggle" data-action="toggleCard">
+          <span class="card-caret">▼</span>
+          <span>
+            <h2>逆算スケジュール</h2>
+            <div class="hint">締切日・実施日から逆算して、準備の目安を組み立てます。いくつでも作成できます。</div>
+          </span>
+        </button>
       </div>
 
       <div class="sched-tabs" id="scheduleTabs"></div>
@@ -449,10 +492,13 @@
 
     <div class="card">
       <div class="card-head">
-        <div>
-          <h2>カレンダー</h2>
-          <div class="hint" id="calendarHint">赤い点がついている日は、選択中のスケジュールの予定日です。</div>
-        </div>
+        <button type="button" class="card-toggle" data-action="toggleCard">
+          <span class="card-caret">▼</span>
+          <span>
+            <h2>カレンダー</h2>
+            <div class="hint" id="calendarHint">赤い点がついている日は、選択中のスケジュールの予定日です。</div>
+          </span>
+        </button>
       </div>
       <div class="month-row" id="calendarWrap"></div>
     </div>
@@ -1475,6 +1521,16 @@
   }
 
   // ---------- events ----------
+  document.querySelectorAll('[data-action="toggleCard"]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var card = btn.closest('.card');
+      if(!card) return;
+      var collapsed = card.classList.toggle('collapsed');
+      var caret = btn.querySelector('.card-caret');
+      if(caret) caret.textContent = collapsed ? '▶' : '▼';
+    });
+  });
+
   roleNotesWrap.addEventListener('change', function(e){
     var t = e.target;
     var id = t.getAttribute('data-id');
