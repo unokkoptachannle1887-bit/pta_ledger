@@ -418,38 +418,12 @@
           <span class="card-caret">▼</span>
           <span>
             <h2>メンバー一覧</h2>
-            <div class="hint">氏名・担当役割・続投予定を入力してください。</div>
+            <div class="hint">氏名・担当役割・続投予定を入力してください。1人が個別に引き継ぐ役割（会長など）の後任は、ここの「後任予定者」欄で指定できます。</div>
           </span>
         </button>
         <button class="btn primary" id="addMemberBtn">＋ メンバーを追加</button>
       </div>
       <div id="membersBody" class="acc-list"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-head">
-        <button type="button" class="card-toggle" data-action="toggleCard">
-          <span class="card-caret">▼</span>
-          <span>
-            <h2>来年度の見込み</h2>
-            <div class="hint">今の設定のまま年度を進めた場合、誰が残り・誰が抜けるかのプレビューです（実際にはまだ何も変わりません）。</div>
-          </span>
-        </button>
-      </div>
-      <div id="nextYearPreview"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-head">
-        <button type="button" class="card-toggle" data-action="toggleCard">
-          <span class="card-caret">▼</span>
-          <span>
-            <h2>引き継ぎ一覧</h2>
-            <div class="hint">誰の役割が誰に引き継がれるか（退任予定者→後任予定者）をまとめます。</div>
-          </span>
-        </button>
-      </div>
-      <div class="handoff-list" id="handoffList"></div>
     </div>
 
     <div class="card">
@@ -465,6 +439,32 @@
       </div>
       <div id="rolesBody" class="acc-list"></div>
       <div id="shortageSummary" class="shortage-summary"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <button type="button" class="card-toggle" data-action="toggleCard">
+          <span class="card-caret">▼</span>
+          <span>
+            <h2>引き継ぎ一覧</h2>
+            <div class="hint">誰の役割が誰に引き継がれるか（退任予定者→後任予定者）をまとめます。複数人体制の役割（監事など）の担当者追加・入れ替えはここで行います。</div>
+          </span>
+        </button>
+      </div>
+      <div class="handoff-list" id="handoffList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <button type="button" class="card-toggle" data-action="toggleCard">
+          <span class="card-caret">▼</span>
+          <span>
+            <h2>来年度の見込み</h2>
+            <div class="hint">今の設定のまま年度を進めた場合、誰が残り・誰が抜けるかのプレビューです（実際にはまだ何も変わりません）。</div>
+          </span>
+        </button>
+      </div>
+      <div id="nextYearPreview"></div>
     </div>
 
     <div class="card">
@@ -1753,6 +1753,9 @@
     var btn = e.target.closest('[data-action="deleteRole"]');
     if(!btn) return;
     var id = btn.getAttribute('data-id');
+    var role = state.roles.find(function(r){ return r.id === id; });
+    var roleName = role ? (role.name || '（名称未設定）') : '';
+    if(!window.confirm('「'+roleName+'」を削除します。元には戻せません。よろしいですか？')) return;
     state.roles = state.roles.filter(function(r){ return r.id !== id; });
     state.members.forEach(function(m){ m.roleIds = (m.roleIds||[]).filter(function(rid){ return rid !== id; }); });
     saveState(); renderAll();
@@ -1802,6 +1805,9 @@
     var btn = e.target.closest('[data-action="deleteMember"]');
     if(!btn) return;
     var id = btn.getAttribute('data-id');
+    var member = state.members.find(function(m){ return m.id === id; });
+    var memberName = member ? (member.name || '（未入力）') : '';
+    if(!window.confirm('「'+memberName+'」を名簿から削除します。元には戻せません。よろしいですか？')) return;
     state.members = state.members.filter(function(m){ return m.id !== id; });
     // 削除したメンバーを後任に指定していた参照もクリア
     state.members.forEach(function(m){
