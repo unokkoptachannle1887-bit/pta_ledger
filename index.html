@@ -20,6 +20,8 @@
     --hanko-soft:#D5847A;
     --gold:#A8863E;
     --ok:#4B7355;
+    --amber:#8A6A1E;
+    --amber-bg:#F1E7CE;
     --ok-bg:#E3ECE0;
     --shortage-bg:#F3E0DA;
   }
@@ -125,11 +127,31 @@
   .btn.small{padding:3px 9px; font-size:12px;}
 
   .acc-list{margin-top:6px;}
+  .acc-search{margin-top:4px;}
+  .acc-search input{
+    width:100%; font-size:13px; padding:8px 10px; border:1px solid var(--paper-line);
+    background:var(--paper-alt);
+  }
+  .usage-guide{font-size:13px; line-height:1.8; color:var(--ink);}
+  .usage-guide ul{margin:0; padding-left:18px;}
+  .usage-guide li{margin-bottom:8px;}
+  .usage-guide li:last-child{margin-bottom:0;}
+  .usage-guide b{color:var(--hanko);}
+  .color-legend{
+    display:flex; flex-wrap:wrap; gap:14px; margin-top:14px; padding-top:12px;
+    border-top:1px dashed var(--paper-line);
+  }
+  .legend-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft);}
+  .legend-dot{width:11px; height:11px; border-radius:50%; display:inline-block; flex-shrink:0;}
+  .legend-dot.stay{background:var(--ok);}
+  .legend-dot.leave{background:var(--ink-soft);}
+  .legend-dot.tbd{background:var(--amber);}
+  .legend-dot.warn{background:var(--hanko);}
   .acc-item{border-top:1px solid var(--paper-line);}
   .acc-item:first-child{border-top:none;}
   .acc-head-row{display:flex; align-items:center; gap:6px; padding:6px 0;}
-  .acc-reorder{display:flex; flex-direction:column; gap:0; white-space:nowrap; flex-shrink:0;}
-  .acc-reorder .icon-btn{font-size:11px; padding:0 4px; line-height:1.4;}
+  .acc-reorder{display:flex; flex-direction:column; gap:2px; white-space:nowrap; flex-shrink:0;}
+  .acc-reorder .icon-btn{font-size:14px; padding:6px 8px; line-height:1;}
   .acc-toggle{
     flex:1 1 auto; min-width:0; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;
     background:none; border:none; text-align:left; cursor:pointer; padding:7px 4px;
@@ -180,16 +202,16 @@
   .badge.short{background:var(--shortage-bg); color:var(--hanko); border:1px solid var(--hanko);}
   .badge.neutral{background:var(--paper-alt); color:var(--ink-soft); border:1px solid var(--paper-line);}
 
-  .icon-btn{background:none; border:none; color:var(--ink-soft); cursor:pointer; font-size:16px; padding:2px 6px;}
+  .icon-btn{background:none; border:none; color:var(--ink-soft); cursor:pointer; font-size:18px; padding:8px 10px; line-height:1;}
   .icon-btn:disabled{opacity:.25; cursor:default;}
   .icon-btn:hover{color:var(--hanko);}
 
   .continue-cell{
-    display:flex; flex-direction:column; gap:4px; min-width:170px;
-    background:var(--paper); padding:10px 12px; border:1px solid var(--paper-line);
+    display:flex; flex-direction:column; gap:9px; min-width:170px;
+    background:var(--paper); padding:12px 12px; border:1px solid var(--paper-line);
   }
-  .continue-cell label{display:flex; align-items:center; gap:5px; font-size:12px; color:var(--ink-soft); cursor:pointer;}
-  .continue-cell input[type=radio]{width:auto; accent-color:var(--hanko);}
+  .continue-cell label{display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink-soft); cursor:pointer; padding:2px 0;}
+  .continue-cell input[type=radio]{width:auto; accent-color:var(--hanko); transform:scale(1.15); margin-right:2px;}
   .until-year-row{display:flex; align-items:center; gap:5px; font-size:12px;}
   .until-year-row input[type=number]{width:64px;}
 
@@ -225,7 +247,8 @@
   .handoff-name{padding:2px 8px; border:1px solid var(--paper-line); background:var(--paper);}
   .handoff-name.leaving{color:var(--ink-soft);}
   .handoff-arrow{color:var(--gold); font-weight:700;}
-  .handoff-name.tbd{color:var(--hanko); border-color:var(--hanko); font-weight:700; text-decoration:none;}
+  .handoff-name.tbd{color:var(--amber); border-color:var(--amber); background:var(--amber-bg); font-weight:700; text-decoration:none;}
+  .handoff-name.warn{color:var(--hanko); border-color:var(--hanko); background:var(--shortage-bg); font-weight:700; text-decoration:none;}
   .handoff-name.stay{border-color:var(--ok); color:var(--ok);}
 
   .team-section{
@@ -238,7 +261,7 @@
   .status-group{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap;}
   .status-group-label{font-size:11.5px; font-weight:700; flex-shrink:0; min-width:52px; letter-spacing:.02em;}
   .status-group-label.leave{color:var(--ink-soft);}
-  .status-group-label.tbd{color:var(--hanko);}
+  .status-group-label.tbd{color:var(--amber);}
   .status-group-label.stay{color:var(--ok);}
   .handoff-split{display:flex; align-items:center; gap:8px; flex-wrap:wrap; row-gap:8px;}
   .split-col{display:flex; flex-wrap:wrap; gap:6px; align-items:center; flex:0 1 auto;}
@@ -353,7 +376,7 @@
     display:flex; flex-direction:column; gap:5px; max-height:340px; overflow-y:auto;
     width:100%; padding:10px 12px; background:var(--paper); border:1px solid var(--paper-line);
   }
-  .role-cell label{display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink-soft); cursor:pointer; padding:3px 0;}
+  .role-cell label{display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink-soft); cursor:pointer; padding:6px 0;}
   .role-cell input[type=checkbox]{width:auto; accent-color:var(--hanko); transform:scale(1.15);}
 
   .succ-cell{display:flex; flex-direction:column; gap:8px; min-width:190px;}
@@ -412,6 +435,33 @@
   <!-- ROSTER PANEL -->
   <section class="panel active" id="panelRoster">
 
+    <div class="card collapsed">
+      <div class="card-head">
+        <button type="button" class="card-toggle" data-action="toggleCard">
+          <span class="card-caret">▶</span>
+          <span>
+            <h2>はじめての方へ（使い方）</h2>
+            <div class="hint">初めてこの画面を開く方は、まずここをご覧ください。</div>
+          </span>
+        </button>
+      </div>
+      <div class="usage-guide">
+        <ul>
+          <li><b>個別後任</b>がONの役職（会長など）＝ 誰が誰に引き継ぐかを、メンバー一覧の「後任予定者」欄で1人ずつ指定します。</li>
+          <li>それ以外の役職（<b>複数人制</b>）＝ 担当者の追加・入れ替えは、個別に指定せず引き継ぎ一覧の「担当者を追加」で行います。</li>
+          <li><b>随時対応</b>＝ 教材選定委員会のように、そのとき空いている人がやればよい役割。人数の管理はしません。</li>
+          <li><b>執行部全体</b>＝ 特定の役割ではなく、全体で共有しておきたいことを仕事内容メモに書くための行です。</li>
+          <li>年度が変わったら、ページ上部の年度表示を書き換えると、退任予定の人が自動で名簿から整理されます（元には戻せないのでご注意ください）。</li>
+        </ul>
+        <div class="color-legend">
+          <span class="legend-item"><span class="legend-dot stay"></span>継続・充足</span>
+          <span class="legend-item"><span class="legend-dot leave"></span>退任・廃止</span>
+          <span class="legend-item"><span class="legend-dot tbd"></span>未確認・未定</span>
+          <span class="legend-item"><span class="legend-dot warn"></span>不足・要対応</span>
+        </div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-head">
         <button type="button" class="card-toggle" data-action="toggleCard">
@@ -423,7 +473,9 @@
         </button>
         <button class="btn primary" id="addMemberBtn">＋ メンバーを追加</button>
       </div>
+      <div class="acc-search"><input type="text" id="memberSearchInput" placeholder="🔍 氏名・役割名で絞り込み"></div>
       <div id="membersBody" class="acc-list"></div>
+      <div class="empty-note" id="memberSearchEmpty" style="display:none;">該当するメンバーが見つかりません。</div>
     </div>
 
     <div class="card">
@@ -437,7 +489,9 @@
         </button>
         <button class="btn primary" id="addRoleBtn">＋ 役割を追加</button>
       </div>
+      <div class="acc-search"><input type="text" id="roleSearchInput" placeholder="🔍 役割名で絞り込み"></div>
       <div id="rolesBody" class="acc-list"></div>
+      <div class="empty-note" id="roleSearchEmpty" style="display:none;">該当する役割が見つかりません。</div>
       <div id="shortageSummary" class="shortage-summary"></div>
     </div>
 
@@ -628,6 +682,33 @@
   // ---------- storage ----------
   // Returns true if remote data was successfully loaded into `state`.
   // On failure it NEVER overwrites state or storage — the caller decides what to do.
+  // 直前に読み込んだ(自分が把握している)メンバー・役割のIDを覚えておく。
+  // 保存時にこれと比較することで、「自分が削除した」のか「元々知らなかった(=他の人が追加した)」のかを区別する。
+  var lastKnownMemberIds = {};
+  var lastKnownRoleIds = {};
+  function snapshotKnownIds(s){
+    lastKnownMemberIds = {};
+    (s.members || []).forEach(function(m){ lastKnownMemberIds[m.id] = true; });
+    lastKnownRoleIds = {};
+    (s.roles || []).forEach(function(r){ lastKnownRoleIds[r.id] = true; });
+  }
+
+  // ID単位でマージ: 自分がローカルで持っているレコードを優先しつつ、
+  // 自分がまだ知らなかった(=他の人が新しく追加した)レコードは取り込み、
+  // 自分が削除したレコードは復活させない。
+  function mergeById(remoteArr, localArr, lastKnownIds){
+    remoteArr = remoteArr || [];
+    localArr = localArr || [];
+    var localIds = {};
+    var merged = localArr.map(function(x){ localIds[x.id] = true; return x; });
+    remoteArr.forEach(function(x){
+      if(localIds[x.id]) return; // ローカル版を優先(既に入っている)
+      if(lastKnownIds[x.id]) return; // 前回読み込み時にはあった=自分が削除した→復活させない
+      merged.push(x); // 自分がまだ知らない=他の人が新しく追加した→取り込む
+    });
+    return merged;
+  }
+
   async function tryFetchRemote(){
     try{
       var res = await fetch(GAS_URL, {method:'GET'});
@@ -637,6 +718,7 @@
         var merged = Object.assign(defaultState(), parsed);
         migrateState(merged);
         state = merged;
+        snapshotKnownIds(state);
         return true;
       }
     }catch(e){ /* not saved yet, or network/transient error */ }
@@ -671,6 +753,19 @@
   function saveState(){
     clearTimeout(saveTimer);
     saveTimer = setTimeout(async function(){
+      // 保存前に最新のデータを取得し、メンバー・役割をID単位でマージする。
+      // これにより、他の人が別のメンバー/役割を編集・追加していた場合、それを消さずに両方を保存できる。
+      try{
+        var res = await fetch(GAS_URL, {method:'GET'});
+        var text = await res.text();
+        if(text){
+          var remote = JSON.parse(text);
+          state.members = mergeById(remote.members, state.members, lastKnownMemberIds);
+          state.roles = mergeById(remote.roles, state.roles, lastKnownRoleIds);
+          snapshotKnownIds(state);
+          renderAll();
+        }
+      }catch(e){ /* 取得できなければローカルの内容のみで保存を続行 */ }
       try{
         // text/plain指定はGAS側とのCORSプリフライトを避けるための意図的な指定
         await fetch(GAS_URL, {
@@ -716,6 +811,10 @@
   var shortageSummary = document.getElementById('shortageSummary');
   var nextYearPreview = document.getElementById('nextYearPreview');
   var roleNotesWrap = document.getElementById('roleNotesWrap');
+  var memberSearchInput = document.getElementById('memberSearchInput');
+  var memberSearchEmpty = document.getElementById('memberSearchEmpty');
+  var roleSearchInput = document.getElementById('roleSearchInput');
+  var roleSearchEmpty = document.getElementById('roleSearchEmpty');
   var scheduleTabsWrap = document.getElementById('scheduleTabs');
   var scheduleEditorWrap = document.getElementById('scheduleEditor');
   var timelineWrap = document.getElementById('timelineWrap');
@@ -1294,7 +1393,7 @@
     var entry = (m.successors && m.successors[role.id]) || null;
     var overallContinuing = (ct === 'untilYear' || ct === 'indefinite');
     var leavingName = '<span class="handoff-name leaving">'+esc(m.name||'（未入力）')+'</span> <span class="handoff-arrow">→</span> ';
-    var tbd = '<span class="handoff-name tbd">後任未定</span>';
+    var tbd = '<span class="handoff-name warn">後任未定</span>';
 
     if(entry){
       if(entry.type === 'member'){
@@ -1488,7 +1587,7 @@
       if(single){
         if(mems.length === 0){
           if(role.abolishNextYear) return;
-          rows.push({role:role, chain:'<span class="handoff-name tbd">担当者未設定</span>', kind:'single'});
+          rows.push({role:role, chain:'<span class="handoff-name warn">担当者未設定</span>', kind:'single'});
           return;
         }
         mems.forEach(function(m){
@@ -1510,7 +1609,7 @@
           countLine = '来年度 継続予定 <b>'+stats.nextYear+'名</b>' +
             (recruits.length > 0 ? ' ＋ 新規予定 <b>'+recruits.length+'名</b>' : '');
           if(unconfirmedCount > 0) countLine += ' <span class="handoff-name tbd">未確認'+unconfirmedCount+'名あり</span>';
-          if(shortfall > 0) countLine += ' <span class="handoff-name tbd">あと'+shortfall+'名募集</span>';
+          if(shortfall > 0) countLine += ' <span class="handoff-name warn">あと'+shortfall+'名募集</span>';
         }
         var chain = '<div class="team-section team-count-row">'+countLine+'</div>';
 
@@ -1591,6 +1690,32 @@
     roleNotesWrap.querySelectorAll('textarea.auto-grow').forEach(autoGrowTextarea);
   }
 
+  function applyMemberFilter(){
+    var q = memberSearchInput.value.trim().toLowerCase();
+    var visibleCount = 0;
+    membersBody.querySelectorAll('.acc-item').forEach(function(item){
+      var toggle = item.querySelector('.acc-toggle');
+      var text = toggle ? toggle.textContent.toLowerCase() : '';
+      var match = !q || text.indexOf(q) !== -1;
+      item.style.display = match ? '' : 'none';
+      if(match) visibleCount++;
+    });
+    memberSearchEmpty.style.display = (q && visibleCount === 0) ? 'block' : 'none';
+  }
+
+  function applyRoleFilter(){
+    var q = roleSearchInput.value.trim().toLowerCase();
+    var visibleCount = 0;
+    rolesBody.querySelectorAll('.acc-item').forEach(function(item){
+      var toggle = item.querySelector('.acc-toggle');
+      var text = toggle ? toggle.textContent.toLowerCase() : '';
+      var match = !q || text.indexOf(q) !== -1;
+      item.style.display = match ? '' : 'none';
+      if(match) visibleCount++;
+    });
+    roleSearchEmpty.style.display = (q && visibleCount === 0) ? 'block' : 'none';
+  }
+
   function renderAll(){
     ensureActiveSchedule();
     renderRoles();
@@ -1602,7 +1727,12 @@
     renderTimeline();
     renderCalendar();
     renderRoleNotes();
+    applyMemberFilter();
+    applyRoleFilter();
   }
+
+  memberSearchInput.addEventListener('input', applyMemberFilter);
+  roleSearchInput.addEventListener('input', applyRoleFilter);
 
   // ---------- events ----------
   document.querySelectorAll('[data-action="toggleCard"]').forEach(function(btn){
