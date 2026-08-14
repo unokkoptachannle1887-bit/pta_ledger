@@ -151,6 +151,9 @@
   .badge.neutral{background:var(--paper-alt); color:var(--ink-soft); border:1px solid var(--paper-line);}
 
   .icon-btn{background:none; border:none; color:var(--ink-soft); cursor:pointer; font-size:16px; padding:2px 6px;}
+  .icon-btn:disabled{opacity:.25; cursor:default;}
+  .reorder-cell{display:flex; flex-direction:column; gap:0; white-space:nowrap;}
+  .reorder-cell .icon-btn{font-size:11px; padding:0 4px; line-height:1.5;}
   .icon-btn:hover{color:var(--hanko);}
 
   .continue-cell{display:flex; flex-direction:column; gap:4px; min-width:170px;}
@@ -203,12 +206,6 @@
   }
   .recruit-add button:hover{background:var(--paper-alt);}
 
-  .org-notes-block{margin-bottom:18px;}
-  .org-notes-label{display:block; font-size:12px; color:var(--ink-soft); margin-bottom:6px; font-weight:600;}
-  #orgNotesInput{
-    width:100%; font-size:13px; padding:10px 12px; border:1px solid var(--paper-line);
-    background:var(--paper-alt); resize:vertical; font-family:inherit; line-height:1.6;
-  }
   .role-note-item{
     padding:14px 0; border-top:1px solid var(--paper-line);
   }
@@ -354,11 +351,12 @@
         <table id="membersTable">
           <thead>
             <tr>
-              <th style="width:18%">氏名</th>
-              <th style="width:18%">担当役割</th>
+              <th></th>
+              <th style="width:17%">氏名</th>
+              <th style="width:17%">担当役割</th>
               <th>継続予定</th>
               <th style="width:18%">後任予定者</th>
-              <th style="width:18%">備考</th>
+              <th style="width:17%">備考</th>
               <th></th>
             </tr>
           </thead>
@@ -389,11 +387,13 @@
         <table id="rolesTable">
           <thead>
             <tr>
-              <th style="width:24%">役割名</th>
+              <th></th>
+              <th style="width:22%">役割名</th>
               <th>現員数</th>
               <th>来年度必要人数</th>
               <th>個別後任<br><span style="font-weight:400; font-size:10px;">(誰から誰かを指定)</span></th>
               <th>随時対応<br><span style="font-weight:400; font-size:10px;">(人数管理しない)</span></th>
+              <th>執行部全体<br><span style="font-weight:400; font-size:10px;">(全体の心得を書く行)</span></th>
               <th>廃止予定</th>
               <th>状態</th>
               <th></th>
@@ -409,12 +409,8 @@
       <div class="card-head">
         <div>
           <h2>仕事内容メモ</h2>
-          <div class="hint">役職ごとの仕事内容や実施時期、執行部全体の心得を書き残せます。次の担当者への引き継ぎにお使いください。</div>
+          <div class="hint">役職ごとの仕事内容や実施時期を書き残せます。執行部全体の心得は、役割一覧で「執行部全体」にチェックした行にまとめて書いてください。次の担当者への引き継ぎにお使いください。</div>
         </div>
-      </div>
-      <div class="org-notes-block">
-        <label class="org-notes-label">執行部全体の心得・共通の仕事内容</label>
-        <textarea id="orgNotesInput" rows="3" placeholder="例：定例会は毎月第2土曜10時〜。会計処理は毎月末までに提出。緊急連絡はLINEグループで。"></textarea>
       </div>
       <div id="roleNotesWrap"></div>
     </div>
@@ -478,10 +474,9 @@
     var r1 = uid(), r2 = uid();
     return {
       baseFiscalYear: fiscalYearOf(today),
-      orgNotes: '',
       roles: [
-        {id:r1, name:'会長', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:true, nextYearRecruits:[], description:'', periodNote:''},
-        {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false, flexible:false, individualHandoff:false, nextYearRecruits:[], description:'', periodNote:''}
+        {id:r1, name:'会長', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:true, isOrgWide:false, nextYearRecruits:[], description:'', periodNote:''},
+        {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false, flexible:false, individualHandoff:false, isOrgWide:false, nextYearRecruits:[], description:'', periodNote:''}
       ],
       members: [
         {id:uid(), name:'山田 太郎', roleIds:[r1], continueType:'thisYear', untilYear:currentFY, successors:{}, note:''},
@@ -495,7 +490,7 @@
   function migrateState(s){
     var hasLegacy = s.scheduleTargetDate || (s.scheduleTasks && s.scheduleTasks.length);
     if(!s.schedules) s.schedules = [];
-    if(typeof s.orgNotes !== 'string') s.orgNotes = '';
+    delete s.orgNotes; // 執行部全体メモは「執行部全体」チェック付きの役割行に統合したため廃止
     delete s.history; // 過去バージョンで保存されていた履歴データは個人情報のため破棄
     if(s.schedules.length === 0 && hasLegacy){
       s.schedules.push({
@@ -511,6 +506,7 @@
     (s.roles || []).forEach(function(r){
       if(typeof r.flexible !== 'boolean') r.flexible = false;
       if(typeof r.individualHandoff !== 'boolean') r.individualHandoff = (r.neededNextYear || 0) <= 1;
+      if(typeof r.isOrgWide !== 'boolean') r.isOrgWide = false;
       if(!Array.isArray(r.nextYearRecruits)) r.nextYearRecruits = [];
       r.nextYearRecruits = r.nextYearRecruits.map(function(x){
         return (typeof x === 'string') ? {type:'text', value:x} : x;
@@ -635,7 +631,6 @@
   var loadWarning = document.getElementById('loadWarning');
   var shortageSummary = document.getElementById('shortageSummary');
   var roleNotesWrap = document.getElementById('roleNotesWrap');
-  var orgNotesInput = document.getElementById('orgNotesInput');
   var scheduleTabsWrap = document.getElementById('scheduleTabs');
   var scheduleEditorWrap = document.getElementById('scheduleEditor');
   var timelineWrap = document.getElementById('timelineWrap');
@@ -753,18 +748,21 @@
 
   function renderRoles(){
     if(state.roles.length === 0){
-      rolesBody.innerHTML = '<tr><td colspan="8" class="empty-note">まだ役割が登録されていません。「＋ 役割を追加」から始めましょう。</td></tr>';
+      rolesBody.innerHTML = '<tr><td colspan="10" class="empty-note">まだ役割が登録されていません。「＋ 役割を追加」から始めましょう。</td></tr>';
     } else {
-      rolesBody.innerHTML = state.roles.map(function(role){
+      rolesBody.innerHTML = state.roles.map(function(role, idx){
         var stats = roleStats(role);
         var abolished = role.abolishNextYear;
         var flexible = !!role.flexible;
         var individualHandoff = !!role.individualHandoff;
+        var isOrgWide = !!role.isOrgWide;
         var effNextYear = effectiveNextYearCount(role);
-        var short = !abolished && !flexible && effNextYear < role.neededNextYear;
+        var short = !abolished && !flexible && !isOrgWide && effNextYear < role.neededNextYear;
         var badge;
         if(abolished){
           badge = '<span class="badge neutral">廃止予定</span>';
+        } else if(isOrgWide){
+          badge = '<span class="badge neutral">執行部全体</span>';
         } else if(flexible){
           badge = '<span class="badge neutral">随時対応</span>';
         } else if(short){
@@ -774,14 +772,19 @@
         }
         return '' +
         '<tr data-role-id="'+role.id+'" class="'+(abolished?'abolished':'')+'">' +
+          '<td class="reorder-cell">' +
+            '<button class="icon-btn" data-action="moveRoleUp" data-id="'+role.id+'" title="上へ" '+(idx===0?'disabled':'')+'>▲</button>' +
+            '<button class="icon-btn" data-action="moveRoleDown" data-id="'+role.id+'" title="下へ" '+(idx===state.roles.length-1?'disabled':'')+'>▼</button>' +
+          '</td>' +
           '<td><div class="role-name-cell">' +
             '<input type="text" data-field="name" data-id="'+role.id+'" value="'+esc(role.name)+'" placeholder="役割名">' +
             (abolished ? '<span class="stamp-tag">廃止</span>' : '') +
           '</div></td>' +
           '<td class="num">'+stats.current+'</td>' +
-          '<td class="num"><input type="number" min="0" data-field="neededNextYear" data-id="'+role.id+'" value="'+role.neededNextYear+'" '+(flexible?'disabled':'')+'></td>' +
-          '<td class="num"><input type="checkbox" data-field="individualHandoff" data-id="'+role.id+'" '+(individualHandoff?'checked':'')+' '+(flexible?'disabled':'')+'></td>' +
-          '<td class="num"><input type="checkbox" data-field="flexible" data-id="'+role.id+'" '+(flexible?'checked':'')+'></td>' +
+          '<td class="num"><input type="number" min="0" data-field="neededNextYear" data-id="'+role.id+'" value="'+role.neededNextYear+'" '+((flexible||isOrgWide)?'disabled':'')+'></td>' +
+          '<td class="num"><input type="checkbox" data-field="individualHandoff" data-id="'+role.id+'" '+(individualHandoff?'checked':'')+' '+((flexible||isOrgWide)?'disabled':'')+'></td>' +
+          '<td class="num"><input type="checkbox" data-field="flexible" data-id="'+role.id+'" '+(flexible?'checked':'')+' '+(isOrgWide?'disabled':'')+'></td>' +
+          '<td class="num"><input type="checkbox" data-field="isOrgWide" data-id="'+role.id+'" '+(isOrgWide?'checked':'')+'></td>' +
           '<td class="num"><input type="checkbox" data-field="abolishNextYear" data-id="'+role.id+'" '+(role.abolishNextYear?'checked':'')+'></td>' +
           '<td>'+badge+'</td>' +
           '<td><button class="icon-btn" data-action="deleteRole" data-id="'+role.id+'" title="削除">✕</button></td>' +
@@ -790,7 +793,7 @@
     }
 
     var shorts = state.roles.filter(function(role){
-      if(role.abolishNextYear || role.flexible) return false;
+      if(role.abolishNextYear || role.flexible || role.isOrgWide) return false;
       return effectiveNextYearCount(role) < role.neededNextYear;
     });
     if(shorts.length === 0){
@@ -837,67 +840,77 @@
     if(heldRoles.length === 0){
       return '<div class="empty-note" style="padding:4px 0;">（担当役割未設定）</div>';
     }
-    var trackedRoles = heldRoles.filter(function(r){ return !r.flexible; });
-    var flexibleCount = heldRoles.length - trackedRoles.length;
-    if(trackedRoles.length === 0){
-      return '<div class="empty-note" style="padding:4px 0;">（随時対応の役割のみのため個別指定は不要。担当の変更は左の「担当役割」欄で）</div>';
+    var trackedRoles = heldRoles.filter(function(r){ return !r.flexible && !r.isOrgWide; });
+    var hiddenCount = heldRoles.length - trackedRoles.length;
+    var singleRoles = trackedRoles.filter(isSingleRole);
+    // 本人が継続する予定でない場合、チーム制の役割は（本人ごと名簿から外れるだけなので）個別に聞く必要がない
+    var teamRoles = overallContinuing ? trackedRoles.filter(function(r){ return !isSingleRole(r); }) : [];
+    hiddenCount += trackedRoles.length - singleRoles.length - teamRoles.length;
+
+    if(singleRoles.length === 0 && teamRoles.length === 0){
+      return '<div class="empty-note" style="padding:4px 0;">（個別に指定する引き継ぎ先はありません。担当の変更は左の「担当役割」欄で）</div>';
     }
     var succ = m.successors || {};
-    var rowsHtml = trackedRoles.map(function(role){
+
+    var singleHtml = singleRoles.map(function(role){
       var entry = succ[role.id] || null;
       var defaultLabel = continuingDefaultLabel(ct);
-
-      if(isSingleRole(role)){
-        // 個別後任ONの役職: 誰が引き継ぐかを具体的に指定する
-        var isManual = entry && entry.type === 'text';
-        var isUndecided = entry && entry.type === 'undecided';
-        var options = '<option value="" '+(!entry?'selected':'')+'>'+defaultLabel+'</option>';
-        state.members.forEach(function(other){
-          if(other.id === m.id) return;
-          var sel = entry && entry.type === 'member' && entry.value === other.id;
-          options += '<option value="'+other.id+'" '+(sel?'selected':'')+'>'+esc(other.name || '（未入力）')+'</option>';
-        });
-        // 継続中の人だけ「あえて未定」を別選択肢として出す。退任予定／未確認は空欄＝未定と同義なので重複させない。
-        if(overallContinuing){
-          options += '<option value="__undecided__" '+(isUndecided?'selected':'')+'>未定</option>';
-        }
-        options += '<option value="__manual__" '+(isManual?'selected':'')+'>その他（手入力）</option>';
-        return '<div class="succ-row">' +
-          '<span class="succ-role">'+esc(role.name||'（名称未設定）')+'</span>' +
-          '<select data-field="successorSel" data-id="'+m.id+'" data-role="'+role.id+'">'+options+'</select>' +
-          (isManual ? '<input type="text" data-field="successorText" data-id="'+m.id+'" data-role="'+role.id+'" value="'+esc(entry.value||'')+'" placeholder="氏名を入力">' : '') +
-        '</div>';
+      // 個別後任ONの役職: 誰が引き継ぐかを具体的に指定する
+      var isManual = entry && entry.type === 'text';
+      var isUndecided = entry && entry.type === 'undecided';
+      var options = '<option value="" '+(!entry?'selected':'')+'>'+defaultLabel+'</option>';
+      state.members.forEach(function(other){
+        if(other.id === m.id) return;
+        var sel = entry && entry.type === 'member' && entry.value === other.id;
+        options += '<option value="'+other.id+'" '+(sel?'selected':'')+'>'+esc(other.name || '（未入力）')+'</option>';
+      });
+      // 継続中の人だけ「あえて未定」を別選択肢として出す。退任予定／未確認は空欄＝未定と同義なので重複させない。
+      if(overallContinuing){
+        options += '<option value="__undecided__" '+(isUndecided?'selected':'')+'>未定</option>';
       }
+      options += '<option value="__manual__" '+(isManual?'selected':'')+'>その他（手入力）</option>';
+      return '<div class="succ-row">' +
+        '<span class="succ-role">'+esc(role.name||'（名称未設定）')+'</span>' +
+        '<select data-field="successorSel" data-id="'+m.id+'" data-role="'+role.id+'">'+options+'</select>' +
+        (isManual ? '<input type="text" data-field="successorText" data-id="'+m.id+'" data-role="'+role.id+'" value="'+esc(entry.value||'')+'" placeholder="氏名を入力">' : '') +
+      '</div>';
+    }).join('');
 
+    var teamHtml = teamRoles.map(function(role){
+      var entry = succ[role.id] || null;
+      var defaultLabel = continuingDefaultLabel(ct);
       // チーム制の役割: 個別の後任は指定しないが、「本人はPTA自体は続けるが、この役割だけは退く」を表せるようにする
       var isLeavingThis = entry && entry.type === 'leaving';
       var isUndecidedThis = entry && entry.type === 'undecided';
       var tOptions = '<option value="" '+(!entry?'selected':'')+'>'+defaultLabel+'</option>';
-      if(overallContinuing){
-        tOptions += '<option value="__leaving__" '+(isLeavingThis?'selected':'')+'>この役割だけ退任予定</option>';
-        tOptions += '<option value="__undecided__" '+(isUndecidedThis?'selected':'')+'>未定</option>';
-      }
+      tOptions += '<option value="__leaving__" '+(isLeavingThis?'selected':'')+'>この役割だけ退任予定</option>';
+      tOptions += '<option value="__undecided__" '+(isUndecidedThis?'selected':'')+'>未定</option>';
       return '<div class="succ-row">' +
         '<span class="succ-role">'+esc(role.name||'（名称未設定）')+'（チーム制）</span>' +
-        '<select data-field="successorTeamSel" data-id="'+m.id+'" data-role="'+role.id+'" '+(overallContinuing?'':'disabled')+'>'+tOptions+'</select>' +
+        '<select data-field="successorTeamSel" data-id="'+m.id+'" data-role="'+role.id+'">'+tOptions+'</select>' +
       '</div>';
     }).join('');
-    var note = flexibleCount > 0 ? '<div class="succ-note">ほか'+flexibleCount+'件（随時対応）は個別指定不要。担当の変更は「担当役割」欄で</div>' : '';
-    return '<div class="succ-cell">' + rowsHtml + note + '</div>';
+
+    var note = hiddenCount > 0 ? '<div class="succ-note">ほか'+hiddenCount+'件は個別指定不要。担当の変更は「担当役割」欄で</div>' : '';
+    return '<div class="succ-cell">' + singleHtml + teamHtml + note + '</div>';
   }
 
   function renderMembers(){
     if(state.members.length === 0){
-      membersBody.innerHTML = '<tr><td colspan="5" class="empty-note">まだメンバーが登録されていません。「＋ メンバーを追加」から始めましょう。</td></tr>';
+      membersBody.innerHTML = '<tr><td colspan="7" class="empty-note">まだメンバーが登録されていません。「＋ メンバーを追加」から始めましょう。</td></tr>';
       return;
     }
-    membersBody.innerHTML = state.members.map(function(m){
+    membersBody.innerHTML = state.members.map(function(m, idx){
       var ct = m.continueType || 'unconfirmed';
       var isUntil = ct === 'untilYear';
       var isIndef = ct === 'indefinite';
       var isUnconfirmed = ct === 'unconfirmed';
       return '' +
       '<tr data-member-id="'+m.id+'">' +
+        '<td class="reorder-cell">' +
+          '<button class="icon-btn" data-action="moveMemberUp" data-id="'+m.id+'" title="上へ" '+(idx===0?'disabled':'')+'>▲</button>' +
+          '<button class="icon-btn" data-action="moveMemberDown" data-id="'+m.id+'" title="下へ" '+(idx===state.members.length-1?'disabled':'')+'>▼</button>' +
+        '</td>' +
         '<td><input type="text" data-field="name" data-id="'+m.id+'" value="'+esc(m.name)+'" placeholder="氏名"></td>' +
         '<td>'+roleCheckboxes(m)+'</td>' +
         '<td><div class="continue-cell">' +
@@ -1140,7 +1153,7 @@
 
     var rows = [];
     state.roles.forEach(function(role){
-      if(role.flexible) return; // 随時対応の役割は引き継ぎ管理の対象外
+      if(role.flexible || role.isOrgWide) return; // 随時対応・執行部全体の役割は引き継ぎ管理の対象外
       var mems = byRole[role.id] || [];
       var single = isSingleRole(role);
 
@@ -1228,9 +1241,6 @@
   }
 
   function renderRoleNotes(){
-    if(document.activeElement !== orgNotesInput){
-      orgNotesInput.value = state.orgNotes || '';
-    }
     if(state.roles.length === 0){
       roleNotesWrap.innerHTML = '<div class="empty-note">役割を登録すると、ここに仕事内容メモを書けます。</div>';
       return;
@@ -1238,8 +1248,8 @@
     roleNotesWrap.innerHTML = state.roles.map(function(role){
       return '' +
       '<div class="role-note-item" data-role-id="'+role.id+'">' +
-        '<div class="role-note-head">'+esc(role.name || '（名称未設定）')+'</div>' +
-        '<textarea rows="2" data-field="description" data-id="'+role.id+'" placeholder="仕事内容（例：月1回の会報作成、行事写真の撮影など）">'+esc(role.description||'')+'</textarea>' +
+        '<div class="role-note-head">'+esc(role.name || '（名称未設定）')+(role.isOrgWide?' <span class="succ-note">（執行部全体）</span>':'')+'</div>' +
+        '<textarea rows="2" data-field="description" data-id="'+role.id+'" placeholder="'+(role.isOrgWide?'執行部全体の心得（例：定例会は毎月第2土曜10時〜。会計処理は毎月末までに提出。）':'仕事内容（例：月1回の会報作成、行事写真の撮影など）')+'">'+esc(role.description||'')+'</textarea>' +
         '<span class="role-note-period-label">実施時期・任期の目安</span>' +
         '<input type="text" data-field="periodNote" data-id="'+role.id+'" value="'+esc(role.periodNote||'')+'" placeholder="例：4〜6月のみ／通年／運動会前後">' +
       '</div>';
@@ -1270,13 +1280,9 @@
     else if(field === 'periodNote') role.periodNote = t.value;
     saveState();
   });
-  orgNotesInput.addEventListener('change', function(){
-    state.orgNotes = orgNotesInput.value;
-    saveState();
-  });
 
   document.getElementById('addRoleBtn').addEventListener('click', function(){
-    state.roles.push({id:uid(), name:'', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:false, nextYearRecruits:[], description:'', periodNote:''});
+    state.roles.push({id:uid(), name:'', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:false, isOrgWide:false, nextYearRecruits:[], description:'', periodNote:''});
     saveState(); renderAll();
   });
   document.getElementById('addMemberBtn').addEventListener('click', function(){
@@ -1339,7 +1345,28 @@
     }
   });
 
+  function moveItem(arr, id, direction){
+    var idx = arr.findIndex(function(x){ return x.id === id; });
+    if(idx === -1) return false;
+    var swapIdx = idx + direction;
+    if(swapIdx < 0 || swapIdx >= arr.length) return false;
+    var tmp = arr[idx];
+    arr[idx] = arr[swapIdx];
+    arr[swapIdx] = tmp;
+    return true;
+  }
+
   rolesBody.addEventListener('click', function(e){
+    var upBtn = e.target.closest('[data-action="moveRoleUp"]');
+    if(upBtn){
+      if(moveItem(state.roles, upBtn.getAttribute('data-id'), -1)){ saveState(); renderAll(); }
+      return;
+    }
+    var downBtn = e.target.closest('[data-action="moveRoleDown"]');
+    if(downBtn){
+      if(moveItem(state.roles, downBtn.getAttribute('data-id'), 1)){ saveState(); renderAll(); }
+      return;
+    }
     var btn = e.target.closest('[data-action="deleteRole"]');
     if(!btn) return;
     var id = btn.getAttribute('data-id');
@@ -1359,10 +1386,21 @@
     else if(field === 'abolishNextYear') role.abolishNextYear = t.checked;
     else if(field === 'flexible') role.flexible = t.checked;
     else if(field === 'individualHandoff') role.individualHandoff = t.checked;
+    else if(field === 'isOrgWide') role.isOrgWide = t.checked;
     saveState(); renderAll();
   });
 
   membersBody.addEventListener('click', function(e){
+    var upBtn = e.target.closest('[data-action="moveMemberUp"]');
+    if(upBtn){
+      if(moveItem(state.members, upBtn.getAttribute('data-id'), -1)){ saveState(); renderAll(); }
+      return;
+    }
+    var downBtn = e.target.closest('[data-action="moveMemberDown"]');
+    if(downBtn){
+      if(moveItem(state.members, downBtn.getAttribute('data-id'), 1)){ saveState(); renderAll(); }
+      return;
+    }
     var btn = e.target.closest('[data-action="deleteMember"]');
     if(!btn) return;
     var id = btn.getAttribute('data-id');
