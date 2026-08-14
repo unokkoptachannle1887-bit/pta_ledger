@@ -234,6 +234,12 @@
   .team-count-row{border-top:none; padding-top:0; font-size:13px;}
   .team-label{display:block; font-size:11px; color:var(--ink-soft); font-weight:700; letter-spacing:.03em; margin-bottom:6px;}
   .preview-tags{display:flex; flex-wrap:wrap; gap:6px;}
+  .status-groups{display:flex; flex-direction:column; gap:8px;}
+  .status-group{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap;}
+  .status-group-label{font-size:11.5px; font-weight:700; flex-shrink:0; min-width:52px; letter-spacing:.02em;}
+  .status-group-label.leave{color:var(--ink-soft);}
+  .status-group-label.tbd{color:var(--hanko);}
+  .status-group-label.stay{color:var(--ok);}
   .handoff-split{display:flex; align-items:center; gap:8px; flex-wrap:wrap; row-gap:8px;}
   .split-col{display:flex; flex-wrap:wrap; gap:6px; align-items:center; flex:0 1 auto;}
   .handoff-split .handoff-arrow{align-self:center; flex-shrink:0;}
@@ -1438,16 +1444,15 @@
         else if(cls === 'tbd') undecided.push(m);
         else staying.push(m);
       });
-      var groups = [];
-      if(leaving.length) groups.push(leaving.map(function(m){ return memberStatusTag(m, role); }).join(''));
-      if(undecided.length) groups.push(undecided.map(function(m){ return memberStatusTag(m, role); }).join(''));
-      if(staying.length) groups.push(staying.map(function(m){ return memberStatusTag(m, role); }).join(''));
-      if(groups.length <= 1){
+      var groupCount = (leaving.length?1:0) + (undecided.length?1:0) + (staying.length?1:0);
+      if(groupCount <= 1){
         return '<div class="preview-tags">'+mems.map(function(m){ return memberStatusTag(m, role); }).join('')+'</div>';
       }
-      return '<div class="handoff-split">' +
-        groups.map(function(g){ return '<div class="split-col">'+g+'</div>'; }).join('<span class="handoff-arrow">→</span>') +
-      '</div>';
+      var rows = [];
+      if(leaving.length) rows.push('<div class="status-group"><span class="status-group-label leave">退任予定</span><div class="preview-tags">'+leaving.map(function(m){ return memberStatusTag(m, role); }).join('')+'</div></div>');
+      if(undecided.length) rows.push('<div class="status-group"><span class="status-group-label tbd">未定</span><div class="preview-tags">'+undecided.map(function(m){ return memberStatusTag(m, role); }).join('')+'</div></div>');
+      if(staying.length) rows.push('<div class="status-group"><span class="status-group-label stay">継続予定</span><div class="preview-tags">'+staying.map(function(m){ return memberStatusTag(m, role); }).join('')+'</div></div>');
+      return '<div class="status-groups">' + rows.join('') + '</div>';
     }
 
     var rows = [];
