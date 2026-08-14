@@ -846,7 +846,7 @@
     var teamRoles = overallContinuing ? trackedRoles.filter(function(r){ return !isSingleRole(r); }) : [];
 
     if(singleRoles.length === 0 && teamRoles.length === 0){
-      return '<div class="empty-note" style="padding:4px 0;">（個別に指定する引き継ぎ先はありません。担当の変更は左の「担当役割」欄で）</div>';
+      return '';
     }
     var succ = m.successors || {};
 
@@ -1076,10 +1076,38 @@
     saveState(); renderAll();
   }
 
+  // 随時対応の役割: 「来年度の予定」ではなく、その場で今の担当者として直接追加する
+  function addFlexMember(roleId){
+    var select = handoffList.querySelector('.flex-add-select[data-role="'+roleId+'"]');
+    if(!select) return;
+    var role = state.roles.find(function(r){ return r.id === roleId; });
+    if(!role) return;
+
+    if(select.value === '__manual__'){
+      var manualInput = handoffList.querySelector('.flex-add-manual-input[data-role="'+roleId+'"]');
+      var name = manualInput ? manualInput.value.trim() : '';
+      if(!name) return;
+      state.members.push({id:uid(), name:name, roleIds:[roleId], continueType:'unconfirmed', untilYear:currentFY, successors:{}, note:''});
+    } else if(select.value){
+      var member = state.members.find(function(m){ return m.id === select.value; });
+      if(!member) return;
+      member.roleIds = member.roleIds || [];
+      if(member.roleIds.indexOf(roleId) === -1) member.roleIds.push(roleId);
+    } else {
+      return;
+    }
+    saveState(); renderAll();
+  }
+
   handoffList.addEventListener('click', function(e){
     var addBtn = e.target.closest('[data-action="addRecruit"]');
     if(addBtn){
       addRecruit(addBtn.getAttribute('data-role'));
+      return;
+    }
+    var addFlexBtn = e.target.closest('[data-action="addFlexMember"]');
+    if(addFlexBtn){
+      addFlexMember(addFlexBtn.getAttribute('data-role'));
       return;
     }
     var rmBtn = e.target.closest('[data-action="removeRecruit"]');
@@ -1097,13 +1125,21 @@
       var manualInput = handoffList.querySelector('.recruit-manual-input[data-role="'+roleId+'"]');
       if(manualInput) manualInput.style.display = (e.target.value === '__manual__') ? '' : 'none';
     }
+    if(e.target.classList.contains('flex-add-select')){
+      var roleId3 = e.target.getAttribute('data-role');
+      var manualInput3 = handoffList.querySelector('.flex-add-manual-input[data-role="'+roleId3+'"]');
+      if(manualInput3) manualInput3.style.display = (e.target.value === '__manual__') ? '' : 'none';
+    }
   });
   handoffList.addEventListener('keydown', function(e){
     if(e.key === 'Enter' && e.target.classList.contains('recruit-manual-input')){
       e.preventDefault();
       addRecruit(e.target.getAttribute('data-role'));
     }
-
+    if(e.key === 'Enter' && e.target.classList.contains('flex-add-manual-input')){
+      e.preventDefault();
+      addFlexMember(e.target.getAttribute('data-role'));
+    }
   });
 
   function roleHandoffChain(role, m){
@@ -1168,13 +1204,28 @@
       var single = isSingleRole(role);
 
       if(role.flexible){
-        // 随時対応: 人数管理はしないが、一覧からは消さず「今誰がやっているか」だけ見せる
+        // 随時対応: 人数管理はしないが、一覧からは消さず「今誰がやっているか」を見せ、その場で担当者を追加できるようにする
         var chain;
         if(mems.length === 0){
           chain = '<span class="succ-note">担当者未設定（随時対応のため人数管理はしません）</span>';
         } else {
           chain = '現在の担当：' + mems.map(function(m){ return memberStatusTag(m, role); }).join('、');
         }
+        var flexMemberOptions = state.members
+          .filter(function(m){ return (m.roleIds||[]).indexOf(role.id) === -1; })
+          .map(function(m){ return '<option value="'+m.id+'">'+esc(m.name||'（未入力）')+'</option>'; })
+          .join('');
+        chain += '<div class="team-members recruit-block">' +
+          '<span class="recruit-add">' +
+            '<select class="flex-add-select" data-role="'+role.id+'">' +
+              '<option value="">既存メンバーから選ぶ</option>' +
+              flexMemberOptions +
+              '<option value="__manual__">新しい人（手入力）</option>' +
+            '</select>' +
+            '<input type="text" class="flex-add-manual-input" data-role="'+role.id+'" placeholder="氏名を入力" style="display:none;">' +
+            '<button type="button" data-action="addFlexMember" data-role="'+role.id+'">＋担当者を追加</button>' +
+          '</span>' +
+        '</div>';
         rows.push({role:role, chain:chain, kind:'flexible'});
         return;
       }
