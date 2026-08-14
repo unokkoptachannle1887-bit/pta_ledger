@@ -114,15 +114,28 @@
   .btn.primary:hover{background:var(--hanko); color:#fff;}
   .btn.small{padding:3px 9px; font-size:12px;}
 
-  .table-scroll{overflow-x:auto; margin-top:6px;}
-  table{width:100%; border-collapse:collapse; min-width:560px;}
-  thead th{
-    text-align:left; font-size:12px; color:var(--ink-soft); font-weight:700;
-    background:var(--paper-alt); padding:9px 10px; border-bottom:1px solid var(--paper-line);
-    white-space:nowrap;
+  .acc-list{margin-top:6px;}
+  .acc-item{border-top:1px solid var(--paper-line);}
+  .acc-item:first-child{border-top:none;}
+  .acc-head-row{display:flex; align-items:center; gap:6px; padding:6px 0;}
+  .acc-reorder{display:flex; flex-direction:column; gap:0; white-space:nowrap; flex-shrink:0;}
+  .acc-reorder .icon-btn{font-size:11px; padding:0 4px; line-height:1.4;}
+  .acc-toggle{
+    flex:1 1 auto; min-width:0; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;
+    background:none; border:none; text-align:left; cursor:pointer; padding:7px 4px;
+    font-family:'Zen Kaku Gothic New',sans-serif;
   }
-  tbody td{padding:9px 10px; border-bottom:1px solid var(--paper-line); vertical-align:middle;}
-  tbody tr:hover{background:rgba(168,134,62,.06);}
+  .acc-toggle:hover .acc-title{color:var(--hanko);}
+  .acc-title{font-family:'Shippori Mincho',serif; font-size:14.5px; font-weight:700; color:var(--ink);}
+  .acc-summary{font-size:12px; color:var(--ink-soft);}
+  .acc-body{padding:6px 4px 18px 22px; display:flex; flex-direction:column; gap:14px;}
+  .acc-field label{display:block; font-size:11px; color:var(--ink-soft); font-weight:700; margin-bottom:5px; letter-spacing:.02em;}
+  .acc-field-row{display:flex; gap:16px; flex-wrap:wrap;}
+  .acc-field-row .acc-field{flex:1 1 140px;}
+  .acc-static{font-family:'JetBrains Mono',monospace; font-size:14px; padding:5px 2px;}
+  .acc-check{display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink); cursor:pointer;}
+  .acc-check input{width:auto; accent-color:var(--hanko);}
+  .needed-tag{font-size:11px; color:var(--ink-soft); font-weight:700;}
   .num{font-family:'JetBrains Mono',monospace; text-align:center;}
 
   input[type=text], input[type=number], input[type=date], select{
@@ -134,9 +147,7 @@
   input:focus, select:focus{outline:none; border-bottom:1.5px solid var(--hanko);}
   select{cursor:pointer;}
 
-  .role-name-cell{display:flex; align-items:center; gap:6px;}
-  .role-name-cell input{font-weight:600;}
-  .abolished input[type=text]{text-decoration:line-through; color:var(--ink-soft);}
+  .abolished .acc-title{text-decoration:line-through; color:var(--ink-soft);}
   .stamp-tag{
     font-size:10px; font-weight:700; color:var(--hanko); border:1.3px solid var(--hanko);
     padding:1px 6px; border-radius:2px; transform:rotate(-4deg); letter-spacing:.05em;
@@ -152,8 +163,6 @@
 
   .icon-btn{background:none; border:none; color:var(--ink-soft); cursor:pointer; font-size:16px; padding:2px 6px;}
   .icon-btn:disabled{opacity:.25; cursor:default;}
-  .reorder-cell{display:flex; flex-direction:column; gap:0; white-space:nowrap;}
-  .reorder-cell .icon-btn{font-size:11px; padding:0 4px; line-height:1.5;}
   .icon-btn:hover{color:var(--hanko);}
 
   .continue-cell{display:flex; flex-direction:column; gap:4px; min-width:170px;}
@@ -186,13 +195,23 @@
     display:flex; align-items:center; gap:10px; flex-wrap:wrap;
     padding:10px 12px; background:var(--paper-alt); border:1px solid var(--paper-line);
   }
+  .handoff-row.team{align-items:flex-start; flex-direction:column; gap:2px;}
   .handoff-role{font-weight:700; font-size:13px; min-width:110px;}
+  .handoff-row.team .handoff-role{margin-bottom:4px;}
   .handoff-chain{display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px;}
+  .handoff-row.team .handoff-chain{display:block; width:100%; font-size:13px;}
   .handoff-name{padding:2px 8px; border:1px solid var(--paper-line); background:var(--paper);}
   .handoff-name.leaving{color:var(--ink-soft);}
   .handoff-arrow{color:var(--gold); font-weight:700;}
   .handoff-name.tbd{color:var(--hanko); border-color:var(--hanko); font-weight:700; text-decoration:none;}
   .handoff-name.stay{border-color:var(--ok); color:var(--ok);}
+
+  .team-section{
+    padding:8px 0; border-top:1px solid var(--paper-line);
+  }
+  .team-count-row{border-top:none; padding-top:0; font-size:13px;}
+  .team-label{display:block; font-size:11px; color:var(--ink-soft); font-weight:700; letter-spacing:.03em; margin-bottom:6px;}
+  .preview-tags{display:flex; flex-wrap:wrap; gap:6px;}
   .team-members{
     width:100%; margin-top:2px; font-size:12px; color:var(--ink-soft);
     display:flex; gap:6px; flex-wrap:wrap; align-items:center;
@@ -207,7 +226,7 @@
   }
   .recruit-remove:hover{opacity:1;}
   .recruit-block{gap:8px;}
-  .recruit-add{display:inline-flex; gap:6px; align-items:center; margin-left:4px;}
+  .recruit-add{display:inline-flex; gap:6px; align-items:center; margin-top:8px;}
   .recruit-input{
     font-size:12px; padding:4px 8px; border:1px solid var(--paper-line);
     background:var(--paper); min-width:160px;
@@ -219,16 +238,23 @@
   .recruit-add button:hover{background:var(--paper-alt);}
 
   .role-note-item{
-    padding:14px 0; border-top:1px solid var(--paper-line);
+    border-top:1px solid var(--paper-line);
   }
-  .role-note-item:first-child{border-top:none; padding-top:4px;}
-  .role-note-head{font-size:14px; font-weight:700; margin-bottom:8px;}
-  .role-note-item textarea{
+  .role-note-item:first-child{border-top:none;}
+  .role-note-head{
+    width:100%; text-align:left; background:none; border:none; cursor:pointer;
+    font-family:'Shippori Mincho',serif; font-size:14px; font-weight:700; color:var(--ink);
+    padding:13px 2px; display:flex; align-items:center; gap:8px;
+  }
+  .role-note-head:hover{color:var(--hanko);}
+  .role-note-caret{font-size:10px; color:var(--gold); width:10px; flex-shrink:0; display:inline-block;}
+  .role-note-body{padding:0 2px 16px 20px;}
+  .role-note-body textarea{
     width:100%; font-size:13px; padding:8px 10px; border:1px solid var(--paper-line);
-    background:var(--paper); resize:vertical; font-family:inherit; line-height:1.6; margin-bottom:6px;
+    background:var(--paper); resize:none; overflow:hidden; font-family:inherit; line-height:1.6; margin-bottom:6px;
   }
-  .role-note-item input[type=text]{
-    width:100%; font-size:12.5px; padding:7px 10px; border:1px solid var(--paper-line); background:var(--paper);
+  .role-note-body input[type=text]{
+    width:100%; font-size:12.5px; padding:7px 10px; border:1px solid var(--paper-line); background:var(--paper); margin-bottom:10px;
   }
   .role-note-period-label{font-size:11px; color:var(--ink-soft); display:block; margin-bottom:3px;}
   .sync-bar{
@@ -359,22 +385,7 @@
         </div>
         <button class="btn primary" id="addMemberBtn">＋ メンバーを追加</button>
       </div>
-      <div class="table-scroll">
-        <table id="membersTable">
-          <thead>
-            <tr>
-              <th></th>
-              <th style="width:17%">氏名</th>
-              <th style="width:17%">担当役割</th>
-              <th>継続予定</th>
-              <th style="width:18%">後任予定者</th>
-              <th style="width:17%">備考</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="membersBody"></tbody>
-        </table>
-      </div>
+      <div id="membersBody" class="acc-list"></div>
     </div>
 
     <div class="card">
@@ -405,25 +416,7 @@
         </div>
         <button class="btn primary" id="addRoleBtn">＋ 役割を追加</button>
       </div>
-      <div class="table-scroll">
-        <table id="rolesTable">
-          <thead>
-            <tr>
-              <th></th>
-              <th style="width:22%">役割名</th>
-              <th>現員数</th>
-              <th>来年度必要人数</th>
-              <th>個別後任<br><span style="font-weight:400; font-size:10px;">(誰から誰かを指定)</span></th>
-              <th>随時対応<br><span style="font-weight:400; font-size:10px;">(人数管理しない)</span></th>
-              <th>執行部全体<br><span style="font-weight:400; font-size:10px;">(全体の心得を書く行)</span></th>
-              <th>廃止予定</th>
-              <th>状態</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="rolesBody"></tbody>
-        </table>
-      </div>
+      <div id="rolesBody" class="acc-list"></div>
       <div id="shortageSummary" class="shortage-summary"></div>
     </div>
 
@@ -431,7 +424,7 @@
       <div class="card-head">
         <div>
           <h2>仕事内容メモ</h2>
-          <div class="hint">役職ごとの仕事内容や実施時期を書き残せます。執行部全体の心得は、役割一覧で「執行部全体」にチェックした行にまとめて書いてください。次の担当者への引き継ぎにお使いください。</div>
+          <div class="hint">役職ごとの仕事内容や実施時期を書き残せます。執行部全体で共有したいことは、役割一覧で「執行部全体」にチェックした行にまとめて書いてください。次の担当者への引き継ぎにお使いください。行をタップすると開閉します。</div>
         </div>
       </div>
       <div id="roleNotesWrap"></div>
@@ -497,8 +490,8 @@
     return {
       baseFiscalYear: fiscalYearOf(today),
       roles: [
-        {id:r1, name:'会長', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:true, isOrgWide:false, nextYearRecruits:[], description:'', periodNote:''},
-        {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false, flexible:false, individualHandoff:false, isOrgWide:false, nextYearRecruits:[], description:'', periodNote:''}
+        {id:r1, name:'会長', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:true, isOrgWide:false, nextYearRecruits:[], description:'', periodNote:'', resourceLink:''},
+        {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false, flexible:false, individualHandoff:false, isOrgWide:false, nextYearRecruits:[], description:'', periodNote:'', resourceLink:''}
       ],
       members: [
         {id:uid(), name:'山田 太郎', roleIds:[r1], continueType:'thisYear', untilYear:currentFY, successors:{}, note:''},
@@ -529,6 +522,7 @@
       if(typeof r.flexible !== 'boolean') r.flexible = false;
       if(typeof r.individualHandoff !== 'boolean') r.individualHandoff = (r.neededNextYear || 0) <= 1;
       if(typeof r.isOrgWide !== 'boolean') r.isOrgWide = false;
+      if(typeof r.resourceLink !== 'string') r.resourceLink = '';
       if(!Array.isArray(r.nextYearRecruits)) r.nextYearRecruits = [];
       r.nextYearRecruits = r.nextYearRecruits.map(function(x){
         return (typeof x === 'string') ? {type:'text', value:x} : x;
@@ -769,9 +763,11 @@
     return stats.nextYear + ((role.nextYearRecruits || []).length);
   }
 
+  var expandedRoles = {}; // ローカルの開閉状態のみ(保存はしない)
+
   function renderRoles(){
     if(state.roles.length === 0){
-      rolesBody.innerHTML = '<tr><td colspan="10" class="empty-note">まだ役割が登録されていません。「＋ 役割を追加」から始めましょう。</td></tr>';
+      rolesBody.innerHTML = '<div class="empty-note">まだ役割が登録されていません。「＋ 役割を追加」から始めましょう。</div>';
     } else {
       rolesBody.innerHTML = state.roles.map(function(role, idx){
         var stats = roleStats(role);
@@ -793,25 +789,33 @@
         } else {
           badge = '<span class="badge ok">充足</span>';
         }
+        var isOpen = !!expandedRoles[role.id];
         return '' +
-        '<tr data-role-id="'+role.id+'" class="'+(abolished?'abolished':'')+'">' +
-          '<td class="reorder-cell">' +
-            '<button class="icon-btn" data-action="moveRoleUp" data-id="'+role.id+'" title="上へ" '+(idx===0?'disabled':'')+'>▲</button>' +
-            '<button class="icon-btn" data-action="moveRoleDown" data-id="'+role.id+'" title="下へ" '+(idx===state.roles.length-1?'disabled':'')+'>▼</button>' +
-          '</td>' +
-          '<td><div class="role-name-cell">' +
-            '<input type="text" data-field="name" data-id="'+role.id+'" value="'+esc(role.name)+'" placeholder="役割名">' +
-            (abolished ? '<span class="stamp-tag">廃止</span>' : '') +
-          '</div></td>' +
-          '<td class="num">'+stats.current+'</td>' +
-          '<td class="num"><input type="number" min="0" data-field="neededNextYear" data-id="'+role.id+'" value="'+role.neededNextYear+'" '+((flexible||isOrgWide)?'disabled':'')+'></td>' +
-          '<td class="num"><input type="checkbox" data-field="individualHandoff" data-id="'+role.id+'" '+(individualHandoff?'checked':'')+' '+((flexible||isOrgWide)?'disabled':'')+'></td>' +
-          '<td class="num"><input type="checkbox" data-field="flexible" data-id="'+role.id+'" '+(flexible?'checked':'')+' '+(isOrgWide?'disabled':'')+'></td>' +
-          '<td class="num"><input type="checkbox" data-field="isOrgWide" data-id="'+role.id+'" '+(isOrgWide?'checked':'')+'></td>' +
-          '<td class="num"><input type="checkbox" data-field="abolishNextYear" data-id="'+role.id+'" '+(role.abolishNextYear?'checked':'')+'></td>' +
-          '<td>'+badge+'</td>' +
-          '<td><button class="icon-btn" data-action="deleteRole" data-id="'+role.id+'" title="削除">✕</button></td>' +
-        '</tr>';
+        '<div class="acc-item'+(isOpen?' open':'')+(abolished?' abolished':'')+'" data-role-id="'+role.id+'">' +
+          '<div class="acc-head-row">' +
+            '<span class="acc-reorder">' +
+              '<button class="icon-btn" data-action="moveRoleUp" data-id="'+role.id+'" title="上へ" '+(idx===0?'disabled':'')+'>▲</button>' +
+              '<button class="icon-btn" data-action="moveRoleDown" data-id="'+role.id+'" title="下へ" '+(idx===state.roles.length-1?'disabled':'')+'>▼</button>' +
+            '</span>' +
+            '<button type="button" class="acc-toggle" data-action="toggleRole" data-id="'+role.id+'">' +
+              '<span class="role-note-caret">'+(isOpen?'▼':'▶')+'</span>' +
+              '<span class="acc-title">'+esc(role.name || '（名称未設定）')+(abolished?' <span class="stamp-tag">廃止</span>':'')+'</span>' +
+              '<span class="acc-summary">現員'+stats.current+'名'+badge+'</span>' +
+            '</button>' +
+            '<button class="icon-btn" data-action="deleteRole" data-id="'+role.id+'" title="削除">✕</button>' +
+          '</div>' +
+          '<div class="acc-body" style="display:'+(isOpen?'block':'none')+';">' +
+            '<div class="acc-field"><label>役割名</label><input type="text" data-field="name" data-id="'+role.id+'" value="'+esc(role.name)+'" placeholder="役割名"></div>' +
+            '<div class="acc-field-row">' +
+              '<div class="acc-field"><label>来年度必要人数</label><input type="number" min="0" data-field="neededNextYear" data-id="'+role.id+'" value="'+role.neededNextYear+'" '+((flexible||isOrgWide)?'disabled':'')+'></div>' +
+              '<div class="acc-field"><label>現員数</label><div class="acc-static">'+stats.current+'名</div></div>' +
+            '</div>' +
+            '<label class="acc-check"><input type="checkbox" data-field="individualHandoff" data-id="'+role.id+'" '+(individualHandoff?'checked':'')+' '+((flexible||isOrgWide)?'disabled':'')+'> 個別後任（誰から誰かを指定する）</label>' +
+            '<label class="acc-check"><input type="checkbox" data-field="flexible" data-id="'+role.id+'" '+(flexible?'checked':'')+' '+(isOrgWide?'disabled':'')+'> 随時対応（人数管理しない）</label>' +
+            '<label class="acc-check"><input type="checkbox" data-field="isOrgWide" data-id="'+role.id+'" '+(isOrgWide?'checked':'')+'> 執行部全体（全体共通の行）</label>' +
+            '<label class="acc-check"><input type="checkbox" data-field="abolishNextYear" data-id="'+role.id+'" '+(role.abolishNextYear?'checked':'')+'> 廃止予定</label>' +
+          '</div>' +
+        '</div>';
       }).join('');
     }
 
@@ -915,9 +919,19 @@
     return '<div class="succ-cell">' + singleHtml + teamHtml + '</div>';
   }
 
+  var expandedMembers = {}; // ローカルの開閉状態のみ(保存はしない)
+
+  function ctSummaryLabel(m){
+    var ct = m.continueType || 'unconfirmed';
+    if(ct === 'thisYear') return '今年度いっぱい';
+    if(ct === 'untilYear') return (m.untilYear||nextFY)+'年度まで継続';
+    if(ct === 'indefinite') return '継続予定（未定）';
+    return '未確認';
+  }
+
   function renderMembers(){
     if(state.members.length === 0){
-      membersBody.innerHTML = '<tr><td colspan="7" class="empty-note">まだメンバーが登録されていません。「＋ メンバーを追加」から始めましょう。</td></tr>';
+      membersBody.innerHTML = '<div class="empty-note">まだメンバーが登録されていません。「＋ メンバーを追加」から始めましょう。</div>';
       return;
     }
     membersBody.innerHTML = state.members.map(function(m, idx){
@@ -925,26 +939,41 @@
       var isUntil = ct === 'untilYear';
       var isIndef = ct === 'indefinite';
       var isUnconfirmed = ct === 'unconfirmed';
+      var isOpen = !!expandedMembers[m.id];
+      var roleNames = (m.roleIds||[]).map(function(rid){
+        var r = state.roles.find(function(x){ return x.id === rid; });
+        return r ? (r.name||'（名称未設定）') : null;
+      }).filter(Boolean);
+      var summary = (roleNames.length ? roleNames.join('・') : '担当役割未設定') + '　' + ctSummaryLabel(m);
       return '' +
-      '<tr data-member-id="'+m.id+'">' +
-        '<td class="reorder-cell">' +
-          '<button class="icon-btn" data-action="moveMemberUp" data-id="'+m.id+'" title="上へ" '+(idx===0?'disabled':'')+'>▲</button>' +
-          '<button class="icon-btn" data-action="moveMemberDown" data-id="'+m.id+'" title="下へ" '+(idx===state.members.length-1?'disabled':'')+'>▼</button>' +
-        '</td>' +
-        '<td><input type="text" data-field="name" data-id="'+m.id+'" value="'+esc(m.name)+'" placeholder="氏名"></td>' +
-        '<td>'+roleCheckboxes(m)+'</td>' +
-        '<td><div class="continue-cell">' +
-          '<label><input type="radio" name="ct-'+m.id+'" data-field="continueType" data-value="thisYear" data-id="'+m.id+'" '+(ct==='thisYear'?'checked':'')+'> 今年度('+currentFY+')いっぱい</label>' +
-          '<label><input type="radio" name="ct-'+m.id+'" data-field="continueType" data-value="untilYear" data-id="'+m.id+'" '+(isUntil?'checked':'')+'>' +
-            '<span class="until-year-row"><input type="number" data-field="untilYear" data-id="'+m.id+'" value="'+(m.untilYear||nextFY)+'" '+(isUntil?'':'disabled')+'>年度まで継続</span>' +
-          '</label>' +
-          '<label><input type="radio" name="ct-'+m.id+'" data-field="continueType" data-value="indefinite" data-id="'+m.id+'" '+(isIndef?'checked':'')+'> 来年度も継続予定（何年度までかは未定）</label>' +
-          '<label><input type="radio" name="ct-'+m.id+'" data-field="continueType" data-value="unconfirmed" data-id="'+m.id+'" '+(isUnconfirmed?'checked':'')+'> 未確認</label>' +
-        '</div></td>' +
-        '<td>'+successorCellHTML(m)+'</td>' +
-        '<td><input type="text" data-field="note" data-id="'+m.id+'" value="'+esc(m.note||'')+'" placeholder="任意"></td>' +
-        '<td><button class="icon-btn" data-action="deleteMember" data-id="'+m.id+'" title="削除">✕</button></td>' +
-      '</tr>';
+      '<div class="acc-item'+(isOpen?' open':'')+'" data-member-id="'+m.id+'">' +
+        '<div class="acc-head-row">' +
+          '<span class="acc-reorder">' +
+            '<button class="icon-btn" data-action="moveMemberUp" data-id="'+m.id+'" title="上へ" '+(idx===0?'disabled':'')+'>▲</button>' +
+            '<button class="icon-btn" data-action="moveMemberDown" data-id="'+m.id+'" title="下へ" '+(idx===state.members.length-1?'disabled':'')+'>▼</button>' +
+          '</span>' +
+          '<button type="button" class="acc-toggle" data-action="toggleMember" data-id="'+m.id+'">' +
+            '<span class="role-note-caret">'+(isOpen?'▼':'▶')+'</span>' +
+            '<span class="acc-title">'+esc(m.name || '（未入力）')+'</span>' +
+            '<span class="acc-summary">'+esc(summary)+'</span>' +
+          '</button>' +
+          '<button class="icon-btn" data-action="deleteMember" data-id="'+m.id+'" title="削除">✕</button>' +
+        '</div>' +
+        '<div class="acc-body" style="display:'+(isOpen?'block':'none')+';">' +
+          '<div class="acc-field"><label>氏名</label><input type="text" data-field="name" data-id="'+m.id+'" value="'+esc(m.name)+'" placeholder="氏名"></div>' +
+          '<div class="acc-field"><label>担当役割</label>'+roleCheckboxes(m)+'</div>' +
+          '<div class="acc-field"><label>継続予定</label><div class="continue-cell">' +
+            '<label><input type="radio" name="ct-'+m.id+'" data-field="continueType" data-value="thisYear" data-id="'+m.id+'" '+(ct==='thisYear'?'checked':'')+'> 今年度('+currentFY+')いっぱい</label>' +
+            '<label><input type="radio" name="ct-'+m.id+'" data-field="continueType" data-value="untilYear" data-id="'+m.id+'" '+(isUntil?'checked':'')+'>' +
+              '<span class="until-year-row"><input type="number" data-field="untilYear" data-id="'+m.id+'" value="'+(m.untilYear||nextFY)+'" '+(isUntil?'':'disabled')+'>年度まで継続</span>' +
+            '</label>' +
+            '<label><input type="radio" name="ct-'+m.id+'" data-field="continueType" data-value="indefinite" data-id="'+m.id+'" '+(isIndef?'checked':'')+'> 来年度も継続予定（何年度までかは未定）</label>' +
+            '<label><input type="radio" name="ct-'+m.id+'" data-field="continueType" data-value="unconfirmed" data-id="'+m.id+'" '+(isUnconfirmed?'checked':'')+'> 未確認</label>' +
+          '</div></div>' +
+          '<div class="acc-field"><label>後任予定者</label>'+successorCellHTML(m)+'</div>' +
+          '<div class="acc-field"><label>備考</label><input type="text" data-field="note" data-id="'+m.id+'" value="'+esc(m.note||'')+'" placeholder="任意"></div>' +
+        '</div>' +
+      '</div>';
     }).join('');
   }
 
@@ -1303,27 +1332,24 @@
 
       if(role.flexible){
         // 随時対応: 人数管理はしないが、一覧からは消さず「今誰がやっているか」を見せ、その場で担当者を追加できるようにする
-        var chain;
-        if(mems.length === 0){
-          chain = '<span class="succ-note">担当者未設定（随時対応のため人数管理はしません）</span>';
-        } else {
-          chain = '現在の担当：' + mems.map(function(m){ return memberStatusTag(m, role); }).join('、');
-        }
+        var flexMembersHtml = mems.length
+          ? mems.map(function(m){ return memberStatusTag(m, role); }).join('')
+          : '<span class="succ-note">担当者未設定（人数管理はしません）</span>';
         var flexMemberOptions = state.members
           .filter(function(m){ return (m.roleIds||[]).indexOf(role.id) === -1; })
           .map(function(m){ return '<option value="'+m.id+'">'+esc(m.name||'（未入力）')+'</option>'; })
           .join('');
-        chain += '<div class="team-members recruit-block">' +
-          '<span class="recruit-add">' +
+        var chain =
+          '<div class="team-section"><span class="team-label">現在の担当</span><div class="preview-tags">'+flexMembersHtml+'</div></div>' +
+          '<div class="team-section"><span class="team-label">担当者を追加</span><span class="recruit-add">' +
             '<select class="flex-add-select" data-role="'+role.id+'">' +
               '<option value="">既存メンバーから選ぶ</option>' +
               flexMemberOptions +
               '<option value="__manual__">新しい人（手入力）</option>' +
             '</select>' +
             '<input type="text" class="flex-add-manual-input" data-role="'+role.id+'" placeholder="氏名を入力" style="display:none;">' +
-            '<button type="button" data-action="addFlexMember" data-role="'+role.id+'">＋担当者を追加</button>' +
-          '</span>' +
-        '</div>';
+            '<button type="button" data-action="addFlexMember" data-role="'+role.id+'">＋追加</button>' +
+          '</span></div>';
         rows.push({role:role, chain:chain, kind:'flexible'});
         return;
       }
@@ -1345,20 +1371,21 @@
         var recruits = role.nextYearRecruits || [];
         var effectiveNextYear = effectiveNextYearCount(role);
         var unconfirmedCount = mems.filter(function(m){ return (m.continueType||'unconfirmed') === 'unconfirmed'; }).length;
-        var chain;
+        var countLine;
         if(role.abolishNextYear){
-          chain = '<span class="handoff-name stay">（役割ごと廃止予定・現在'+stats.current+'名）</span>';
+          countLine = '<span class="handoff-name stay">役割ごと廃止予定・現在'+stats.current+'名</span>';
         } else {
           var shortfall = need - effectiveNextYear;
-          chain = '来年度 継続予定 <b>'+stats.nextYear+'名</b>' +
-            (recruits.length > 0 ? ' ＋ 新規予定 <b>'+recruits.length+'名</b>' : '') +
-            ' ／ 必要 '+need+'名';
-          if(unconfirmedCount > 0) chain += ' <span class="handoff-name tbd">未確認'+unconfirmedCount+'名あり</span>';
-          if(shortfall > 0) chain += ' <span class="handoff-name tbd">あと'+shortfall+'名募集</span>';
+          countLine = '来年度 継続予定 <b>'+stats.nextYear+'名</b>' +
+            (recruits.length > 0 ? ' ＋ 新規予定 <b>'+recruits.length+'名</b>' : '');
+          if(unconfirmedCount > 0) countLine += ' <span class="handoff-name tbd">未確認'+unconfirmedCount+'名あり</span>';
+          if(shortfall > 0) countLine += ' <span class="handoff-name tbd">あと'+shortfall+'名募集</span>';
         }
+        var chain = '<div class="team-section team-count-row">'+countLine+'</div>';
+
         if(mems.length > 0){
-          var memberTags = mems.map(function(m){ return memberStatusTag(m, role); }).join('、');
-          chain += '<div class="team-members">現在の担当：'+memberTags+'</div>';
+          var memberTags = mems.map(function(m){ return memberStatusTag(m, role); }).join('');
+          chain += '<div class="team-section"><span class="team-label">現在の担当</span><div class="preview-tags">'+memberTags+'</div></div>';
         }
         if(!role.abolishNextYear){
           var recruitTags = recruits.map(function(entry, idx){
@@ -1374,8 +1401,8 @@
           var memberOptions = state.members.map(function(m){
             return '<option value="'+m.id+'">'+esc(m.name||'（未入力）')+'</option>';
           }).join('');
-          chain += '<div class="team-members recruit-block">' +
-            '来年度からの新規加入予定：' + (recruitTags || '<span class="succ-note">まだありません</span>') +
+          chain += '<div class="team-section"><span class="team-label">来年度からの新規加入予定</span>' +
+            '<div class="preview-tags">'+(recruitTags || '<span class="succ-note">まだありません</span>')+'</div>' +
             '<span class="recruit-add">' +
               '<select class="recruit-select" data-role="'+role.id+'">' +
                 '<option value="">既存メンバーから選ぶ</option>' +
@@ -1384,8 +1411,7 @@
               '</select>' +
               '<input type="text" class="recruit-manual-input" data-role="'+role.id+'" placeholder="氏名を入力" style="display:none;">' +
               '<button type="button" data-action="addRecruit" data-role="'+role.id+'">＋追加</button>' +
-            '</span>' +
-          '</div>';
+            '</span></div>';
         }
         rows.push({role:role, chain:chain, kind:'team'});
       }
@@ -1396,9 +1422,18 @@
       return;
     }
     handoffList.innerHTML = rows.map(function(r){
-      var tag = r.kind === 'team' ? ' <span class="succ-note">（複数人制）</span>' : (r.kind === 'flexible' ? ' <span class="succ-note">（随時対応）</span>' : '');
+      var tag = r.kind === 'team'
+        ? ' <span class="succ-note">（複数人制）</span> <span class="needed-tag">'+(r.role.neededNextYear||0)+'名必要</span>'
+        : (r.kind === 'flexible' ? ' <span class="succ-note">（随時対応）</span>' : '');
       return '<div class="handoff-row'+(r.kind!=='single'?' team':'')+'"><span class="handoff-role">'+esc(r.role.name||'（名称未設定）')+tag+'</span><span class="handoff-chain">'+r.chain+'</span></div>';
     }).join('');
+  }
+
+  var expandedRoleNotes = {}; // ローカルの開閉状態のみ(保存はしない)
+
+  function autoGrowTextarea(el){
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
   }
 
   function renderRoleNotes(){
@@ -1407,14 +1442,23 @@
       return;
     }
     roleNotesWrap.innerHTML = state.roles.map(function(role){
+      var isOpen = !!expandedRoleNotes[role.id];
       return '' +
-      '<div class="role-note-item" data-role-id="'+role.id+'">' +
-        '<div class="role-note-head">'+esc(role.name || '（名称未設定）')+(role.isOrgWide?' <span class="succ-note">（執行部全体）</span>':'')+'</div>' +
-        '<textarea rows="2" data-field="description" data-id="'+role.id+'" placeholder="'+(role.isOrgWide?'執行部全体の心得（例：定例会は毎月第2土曜10時〜。会計処理は毎月末までに提出。）':'仕事内容（例：月1回の会報作成、行事写真の撮影など）')+'">'+esc(role.description||'')+'</textarea>' +
-        '<span class="role-note-period-label">実施時期・任期の目安</span>' +
-        '<input type="text" data-field="periodNote" data-id="'+role.id+'" value="'+esc(role.periodNote||'')+'" placeholder="例：4〜6月のみ／通年／運動会前後">' +
+      '<div class="role-note-item'+(isOpen?' open':'')+'" data-role-id="'+role.id+'">' +
+        '<button type="button" class="role-note-head" data-action="toggleRoleNote" data-id="'+role.id+'">' +
+          '<span class="role-note-caret">'+(isOpen?'▼':'▶')+'</span>' +
+          esc(role.name || '（名称未設定）')+(role.isOrgWide?' <span class="succ-note">（執行部全体）</span>':'') +
+        '</button>' +
+        '<div class="role-note-body" style="display:'+(isOpen?'block':'none')+';">' +
+          '<textarea class="auto-grow" rows="2" data-field="description" data-id="'+role.id+'" placeholder="'+(role.isOrgWide?'執行部全体で共有しておきたいこと（例：定例会は毎月第2土曜10時〜。会計処理は毎月末までに提出。）':'仕事内容（例：月1回の会報作成、行事写真の撮影など）')+'">'+esc(role.description||'')+'</textarea>' +
+          '<span class="role-note-period-label">実施時期・任期の目安</span>' +
+          '<textarea class="auto-grow" rows="1" data-field="periodNote" data-id="'+role.id+'" placeholder="例：4〜6月のみ／通年／運動会前後">'+esc(role.periodNote||'')+'</textarea>' +
+          '<span class="role-note-period-label">関連資料のリンク（PDFなどをGoogleドライブ等で共有したURL）</span>' +
+          '<input type="text" data-field="resourceLink" data-id="'+role.id+'" value="'+esc(role.resourceLink||'')+'" placeholder="例：https://drive.google.com/...">' +
+        '</div>' +
       '</div>';
     }).join('');
+    roleNotesWrap.querySelectorAll('textarea.auto-grow').forEach(autoGrowTextarea);
   }
 
   function renderAll(){
@@ -1440,11 +1484,33 @@
     if(!role) return;
     if(field === 'description') role.description = t.value;
     else if(field === 'periodNote') role.periodNote = t.value;
+    else if(field === 'resourceLink') role.resourceLink = t.value;
     saveState();
+  });
+  roleNotesWrap.addEventListener('input', function(e){
+    if(e.target.classList.contains('auto-grow')) autoGrowTextarea(e.target);
+  });
+  roleNotesWrap.addEventListener('click', function(e){
+    var toggleBtn = e.target.closest('[data-action="toggleRoleNote"]');
+    if(!toggleBtn) return;
+    var rid = toggleBtn.getAttribute('data-id');
+    var isOpen = !expandedRoleNotes[rid];
+    expandedRoleNotes[rid] = isOpen;
+    var item = roleNotesWrap.querySelector('.role-note-item[data-role-id="'+rid+'"]');
+    if(!item) return;
+    item.classList.toggle('open', isOpen);
+    var body = item.querySelector('.role-note-body');
+    var caret = item.querySelector('.role-note-caret');
+    if(body) body.style.display = isOpen ? 'block' : 'none';
+    if(caret) caret.textContent = isOpen ? '▼' : '▶';
+    if(isOpen){
+      var ta = item.querySelector('textarea.auto-grow');
+      if(ta) autoGrowTextarea(ta);
+    }
   });
 
   document.getElementById('addRoleBtn').addEventListener('click', function(){
-    state.roles.push({id:uid(), name:'', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:false, isOrgWide:false, nextYearRecruits:[], description:'', periodNote:''});
+    state.roles.push({id:uid(), name:'', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:false, isOrgWide:false, nextYearRecruits:[], description:'', periodNote:'', resourceLink:''});
     saveState(); renderAll();
   });
   document.getElementById('addMemberBtn').addEventListener('click', function(){
@@ -1529,6 +1595,21 @@
       if(moveItem(state.roles, downBtn.getAttribute('data-id'), 1)){ saveState(); renderAll(); }
       return;
     }
+    var toggleBtn = e.target.closest('[data-action="toggleRole"]');
+    if(toggleBtn){
+      var rid = toggleBtn.getAttribute('data-id');
+      var isOpen = !expandedRoles[rid];
+      expandedRoles[rid] = isOpen;
+      var item = rolesBody.querySelector('.acc-item[data-role-id="'+rid+'"]');
+      if(item){
+        item.classList.toggle('open', isOpen);
+        var body = item.querySelector('.acc-body');
+        var caret = item.querySelector('.role-note-caret');
+        if(body) body.style.display = isOpen ? 'block' : 'none';
+        if(caret) caret.textContent = isOpen ? '▼' : '▶';
+      }
+      return;
+    }
     var btn = e.target.closest('[data-action="deleteRole"]');
     if(!btn) return;
     var id = btn.getAttribute('data-id');
@@ -1561,6 +1642,21 @@
     var downBtn = e.target.closest('[data-action="moveMemberDown"]');
     if(downBtn){
       if(moveItem(state.members, downBtn.getAttribute('data-id'), 1)){ saveState(); renderAll(); }
+      return;
+    }
+    var toggleBtn = e.target.closest('[data-action="toggleMember"]');
+    if(toggleBtn){
+      var mid = toggleBtn.getAttribute('data-id');
+      var isOpen = !expandedMembers[mid];
+      expandedMembers[mid] = isOpen;
+      var item = membersBody.querySelector('.acc-item[data-member-id="'+mid+'"]');
+      if(item){
+        item.classList.toggle('open', isOpen);
+        var body = item.querySelector('.acc-body');
+        var caret = item.querySelector('.role-note-caret');
+        if(body) body.style.display = isOpen ? 'block' : 'none';
+        if(caret) caret.textContent = isOpen ? '▼' : '▶';
+      }
       return;
     }
     var btn = e.target.closest('[data-action="deleteMember"]');
@@ -1623,7 +1719,7 @@
     saveState(); renderAll();
 
     if(scrollTop !== null){
-      var newCell = membersBody.querySelector('tr[data-member-id="'+id+'"] .role-cell');
+      var newCell = membersBody.querySelector('.acc-item[data-member-id="'+id+'"] .role-cell');
       if(newCell) newCell.scrollTop = scrollTop;
     }
   });
