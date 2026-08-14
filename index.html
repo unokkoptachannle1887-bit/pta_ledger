@@ -165,6 +165,18 @@
   .empty-note{font-size:13px; color:var(--ink-soft); padding:16px 4px; font-style:normal;}
 
   .shortage-summary{margin-top:14px; padding:12px 14px; background:var(--shortage-bg); border-left:3px solid var(--hanko); font-size:13px;}
+
+  .preview-groups{display:flex; flex-direction:column; gap:14px;}
+  .preview-group b{display:block; font-size:12px; margin-bottom:6px; letter-spacing:.03em;}
+  .preview-group.stay b{color:var(--ok);}
+  .preview-group.leave b{color:var(--hanko);}
+  .preview-group.unconfirmed b{color:var(--hanko);}
+  .preview-tags{display:flex; flex-wrap:wrap; gap:6px;}
+  .preview-tag{
+    padding:5px 10px; border:1px solid var(--paper-line); background:var(--paper-alt); font-size:12.5px;
+  }
+  .preview-tag .roles{display:block; font-size:10.5px; color:var(--ink-soft); margin-top:2px;}
+  .preview-summary{font-size:12px; color:var(--ink-soft); margin-bottom:12px;}
   .shortage-summary.none{background:var(--ok-bg); border-left-color:var(--ok); color:var(--ok);}
   .shortage-summary b{display:block; font-size:12px; margin-bottom:4px; letter-spacing:.03em;}
 
@@ -363,6 +375,16 @@
           <tbody id="membersBody"></tbody>
         </table>
       </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>来年度の見込み</h2>
+          <div class="hint">今の設定のまま年度を進めた場合、誰が残り・誰が抜けるかのプレビューです（実際にはまだ何も変わりません）。</div>
+        </div>
+      </div>
+      <div id="nextYearPreview"></div>
     </div>
 
     <div class="card">
@@ -630,6 +652,7 @@
   var membersBody = document.getElementById('membersBody');
   var loadWarning = document.getElementById('loadWarning');
   var shortageSummary = document.getElementById('shortageSummary');
+  var nextYearPreview = document.getElementById('nextYearPreview');
   var roleNotesWrap = document.getElementById('roleNotesWrap');
   var scheduleTabsWrap = document.getElementById('scheduleTabs');
   var scheduleEditorWrap = document.getElementById('scheduleEditor');
@@ -1175,6 +1198,81 @@
     return leavingName + tbd; // ct === 'thisYear' かつ役割ごとの指定なし
   }
 
+  function renderNextYearPreview(){
+    var abolishedRoleIds = {};
+    state.roles.forEach(function(r){ if(r.abolishNextYear) abolishedRoleIds[r.id] = true; });
+
+    var staying = [], leaving = [], unconfirmed = [];
+    state.members.forEach(function(m){
+      var ct = m.continueType || 'unconfirmed';
+      if(ct === 'thisYear'){
+        leaving.push(m);
+        return;
+      }
+      if(ct === 'unconfirmed'){
+        unconfirmed.push(m);
+        return;
+      }
+      var stays = ct === 'indefinite' || (ct === 'untilYear' && Number(m.untilYear) >= nextFY);
+      if(stays){
+        staying.push(m);
+      } else {
+        leaving.push(m); // untilYearが既に過ぎている場合など
+      }
+    });
+
+    function roleNamesFor(m){
+      var names = (m.roleIds||[]).map(function(rid){
+        if(abolishedRoleIds[rid]) return null;
+        var entry = (m.successors && m.successors[rid]) || null;
+        if(entry && entry.type === 'leaving') return null; // この役割だけ退任予定
+        var role = state.roles.find(function(r){ return r.id === rid; });
+        return role ? (role.name || '（名称未設定）') : null;
+      }).filter(Boolean);
+      return names;
+    }
+
+    function tag(m, extra){
+      var roles = roleNamesFor(m);
+      var rolesHtml = roles.length ? '<span class="roles">'+esc(roles.join('、'))+'</span>' : '<span class="roles">（担当役割なし）</span>';
+      return '<span class="preview-tag">'+esc(m.name||'（未入力）')+(extra?'　'+extra:'')+rolesHtml+'</span>';
+    }
+
+    // 来年度からの新規加入予定（複数人制の役割に登録されている分）
+    var recruitNames = [];
+    state.roles.forEach(function(r){
+      if(abolishedRoleIds[r.id]) return;
+      (r.nextYearRecruits||[]).forEach(function(entry){
+        if(entry.type === 'member'){
+          var mm = state.members.find(function(x){ return x.id === entry.value; });
+          recruitNames.push((mm?mm.name:'（削除済み）') + '（' + (r.name||'') + '）');
+        } else {
+          recruitNames.push(entry.value + '（' + (r.name||'') + '）');
+        }
+      });
+    });
+
+    var html = '<div class="preview-summary">現在 '+state.members.length+'名 → 来年度は少なくとも '+staying.length+'名が継続予定です'+(unconfirmed.length?'（うち'+unconfirmed.length+'名は未確認）':'')+'。</div>';
+    html += '<div class="preview-groups">';
+    html += '<div class="preview-group stay"><b>続投予定（'+staying.length+'名）</b><div class="preview-tags">' +
+      (staying.length ? staying.map(function(m){ return tag(m); }).join('') : '<span class="empty-note" style="padding:0;">いません</span>') +
+      '</div></div>';
+    if(recruitNames.length){
+      html += '<div class="preview-group stay"><b>新規加入予定（'+recruitNames.length+'名）</b><div class="preview-tags">' +
+        recruitNames.map(function(n){ return '<span class="preview-tag">'+esc(n)+'</span>'; }).join('') +
+        '</div></div>';
+    }
+    html += '<div class="preview-group unconfirmed"><b>未確認・要フォロー（'+unconfirmed.length+'名）</b><div class="preview-tags">' +
+      (unconfirmed.length ? unconfirmed.map(function(m){ return tag(m); }).join('') : '<span class="empty-note" style="padding:0;">いません</span>') +
+      '</div></div>';
+    html += '<div class="preview-group leave"><b>退任予定（'+leaving.length+'名）</b><div class="preview-tags">' +
+      (leaving.length ? leaving.map(function(m){ return tag(m); }).join('') : '<span class="empty-note" style="padding:0;">いません</span>') +
+      '</div></div>';
+    html += '</div>';
+
+    nextYearPreview.innerHTML = html;
+  }
+
   function renderHandoff(){
     // group members by role
     var byRole = {};
@@ -1323,6 +1421,7 @@
     ensureActiveSchedule();
     renderRoles();
     renderMembers();
+    renderNextYearPreview();
     renderHandoff();
     renderScheduleTabs();
     renderScheduleEditor();
