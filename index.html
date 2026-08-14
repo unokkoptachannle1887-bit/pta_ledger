@@ -659,7 +659,7 @@
         '・継続予定なし（今年度いっぱい）の人 → 退任として名簿から外れます（元には戻せません）\n' +
         '・◯◯年度まで継続の人 → その年度まではそのまま名簿に残ります\n' +
         '・継続予定（何年度までかは未定）／未確認の人 → そのまま名簿に残ります\n' +
-        '・チーム制の役割の「新規加入予定」に書いた人 → 正式なメンバーとして名簿に追加されます\n\n' +
+        '・複数人制の役割の「新規加入予定」に書いた人 → 正式なメンバーとして名簿に追加されます\n\n' +
         'よろしいですか？';
       if(!window.confirm(msg)){ fyInput.value = currentFY; return; }
       advanceFiscalYearTo(v);
@@ -841,11 +841,9 @@
       return '<div class="empty-note" style="padding:4px 0;">（担当役割未設定）</div>';
     }
     var trackedRoles = heldRoles.filter(function(r){ return !r.flexible && !r.isOrgWide; });
-    var hiddenCount = heldRoles.length - trackedRoles.length;
     var singleRoles = trackedRoles.filter(isSingleRole);
-    // 本人が継続する予定でない場合、チーム制の役割は（本人ごと名簿から外れるだけなので）個別に聞く必要がない
+    // 本人が継続する予定でない場合、複数人制の役割は（本人ごと名簿から外れるだけなので）個別に聞く必要がない
     var teamRoles = overallContinuing ? trackedRoles.filter(function(r){ return !isSingleRole(r); }) : [];
-    hiddenCount += trackedRoles.length - singleRoles.length - teamRoles.length;
 
     if(singleRoles.length === 0 && teamRoles.length === 0){
       return '<div class="empty-note" style="padding:4px 0;">（個別に指定する引き継ぎ先はありません。担当の変更は左の「担当役割」欄で）</div>';
@@ -879,20 +877,19 @@
     var teamHtml = teamRoles.map(function(role){
       var entry = succ[role.id] || null;
       var defaultLabel = continuingDefaultLabel(ct);
-      // チーム制の役割: 個別の後任は指定しないが、「本人はPTA自体は続けるが、この役割だけは退く」を表せるようにする
+      // 複数人制の役割: 個別の後任は指定しないが、「本人はPTA自体は続けるが、この役割だけは退く」を表せるようにする
       var isLeavingThis = entry && entry.type === 'leaving';
       var isUndecidedThis = entry && entry.type === 'undecided';
       var tOptions = '<option value="" '+(!entry?'selected':'')+'>'+defaultLabel+'</option>';
       tOptions += '<option value="__leaving__" '+(isLeavingThis?'selected':'')+'>この役割だけ退任予定</option>';
       tOptions += '<option value="__undecided__" '+(isUndecidedThis?'selected':'')+'>未定</option>';
       return '<div class="succ-row">' +
-        '<span class="succ-role">'+esc(role.name||'（名称未設定）')+'（チーム制）</span>' +
+        '<span class="succ-role">'+esc(role.name||'（名称未設定）')+'（複数人制）</span>' +
         '<select data-field="successorTeamSel" data-id="'+m.id+'" data-role="'+role.id+'">'+tOptions+'</select>' +
       '</div>';
     }).join('');
 
-    var note = hiddenCount > 0 ? '<div class="succ-note">ほか'+hiddenCount+'件は個別指定不要。担当の変更は「担当役割」欄で</div>' : '';
-    return '<div class="succ-cell">' + singleHtml + teamHtml + note + '</div>';
+    return '<div class="succ-cell">' + singleHtml + teamHtml + '</div>';
   }
 
   function renderMembers(){
@@ -1151,23 +1148,48 @@
       });
     });
 
+    function memberStatusTag(m, role){
+      var ct = m.continueType || 'unconfirmed';
+      var entry = (m.successors && m.successors[role.id]) || null;
+      var statusClass = 'stay', statusLabel;
+      if(ct === 'unconfirmed'){ statusLabel = '未確認'; statusClass = 'tbd'; }
+      else if(ct === 'thisYear'){ statusLabel = '退任予定'; statusClass = 'leaving'; }
+      else if(entry && entry.type === 'leaving'){ statusLabel = 'この役割だけ退任予定'; statusClass = 'leaving'; }
+      else if(entry && entry.type === 'undecided'){ statusLabel = 'この役割は未定'; statusClass = 'tbd'; }
+      else if(ct === 'untilYear'){ statusLabel = m.untilYear+'年度まで継続'; }
+      else { statusLabel = '継続予定'; }
+      return '<span class="handoff-name '+statusClass+'">'+esc(m.name||'（未入力）')+'（'+statusLabel+'）</span>';
+    }
+
     var rows = [];
     state.roles.forEach(function(role){
-      if(role.flexible || role.isOrgWide) return; // 随時対応・執行部全体の役割は引き継ぎ管理の対象外
+      if(role.isOrgWide) return; // 執行部全体の行は実質的な役割ではないため対象外
       var mems = byRole[role.id] || [];
       var single = isSingleRole(role);
+
+      if(role.flexible){
+        // 随時対応: 人数管理はしないが、一覧からは消さず「今誰がやっているか」だけ見せる
+        var chain;
+        if(mems.length === 0){
+          chain = '<span class="succ-note">担当者未設定（随時対応のため人数管理はしません）</span>';
+        } else {
+          chain = '現在の担当：' + mems.map(function(m){ return memberStatusTag(m, role); }).join('、');
+        }
+        rows.push({role:role, chain:chain, kind:'flexible'});
+        return;
+      }
 
       if(single){
         if(mems.length === 0){
           if(role.abolishNextYear) return;
-          rows.push({role:role, chain:'<span class="handoff-name tbd">担当者未設定</span>', team:false});
+          rows.push({role:role, chain:'<span class="handoff-name tbd">担当者未設定</span>', kind:'single'});
           return;
         }
         mems.forEach(function(m){
-          rows.push({role:role, chain:roleHandoffChain(role, m), team:false});
+          rows.push({role:role, chain:roleHandoffChain(role, m), kind:'single'});
         });
       } else {
-        // チーム制の役割: 個人同士のペアリングではなく、人数の充足状況をまとめて表示。
+        // 複数人制の役割: 個人同士のペアリングではなく、人数の充足状況をまとめて表示。
         // 「誰が今その役についているか」に加え、「来年度からの新規加入予定」も名前で書き留められるようにする。
         var stats = roleStats(role);
         var need = role.neededNextYear || 0;
@@ -1186,18 +1208,7 @@
           if(shortfall > 0) chain += ' <span class="handoff-name tbd">あと'+shortfall+'名募集</span>';
         }
         if(mems.length > 0){
-          var memberTags = mems.map(function(m){
-            var ct = m.continueType || 'unconfirmed';
-            var entry = (m.successors && m.successors[role.id]) || null;
-            var statusClass = 'stay', statusLabel;
-            if(ct === 'unconfirmed'){ statusLabel = '未確認'; statusClass = 'tbd'; }
-            else if(ct === 'thisYear'){ statusLabel = '退任予定'; statusClass = 'leaving'; }
-            else if(entry && entry.type === 'leaving'){ statusLabel = 'この役割だけ退任予定'; statusClass = 'leaving'; }
-            else if(entry && entry.type === 'undecided'){ statusLabel = 'この役割は未定'; statusClass = 'tbd'; }
-            else if(ct === 'untilYear'){ statusLabel = m.untilYear+'年度まで継続'; }
-            else { statusLabel = '継続予定'; }
-            return '<span class="handoff-name '+statusClass+'">'+esc(m.name||'（未入力）')+'（'+statusLabel+'）</span>';
-          }).join('、');
+          var memberTags = mems.map(function(m){ return memberStatusTag(m, role); }).join('、');
           chain += '<div class="team-members">現在の担当：'+memberTags+'</div>';
         }
         if(!role.abolishNextYear){
@@ -1227,7 +1238,7 @@
             '</span>' +
           '</div>';
         }
-        rows.push({role:role, chain:chain, team:true});
+        rows.push({role:role, chain:chain, kind:'team'});
       }
     });
 
@@ -1236,7 +1247,8 @@
       return;
     }
     handoffList.innerHTML = rows.map(function(r){
-      return '<div class="handoff-row'+(r.team?' team':'')+'"><span class="handoff-role">'+esc(r.role.name||'（名称未設定）')+(r.team?' <span class="succ-note">（チーム制）</span>':'')+'</span><span class="handoff-chain">'+r.chain+'</span></div>';
+      var tag = r.kind === 'team' ? ' <span class="succ-note">（複数人制）</span>' : (r.kind === 'flexible' ? ' <span class="succ-note">（随時対応）</span>' : '');
+      return '<div class="handoff-row'+(r.kind!=='single'?' team':'')+'"><span class="handoff-role">'+esc(r.role.name||'（名称未設定）')+tag+'</span><span class="handoff-chain">'+r.chain+'</span></div>';
     }).join('');
   }
 
