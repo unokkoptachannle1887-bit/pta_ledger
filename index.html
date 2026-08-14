@@ -1262,7 +1262,7 @@
         recruitNames.map(function(n){ return '<span class="preview-tag">'+esc(n)+'</span>'; }).join('') +
         '</div></div>';
     }
-    html += '<div class="preview-group unconfirmed"><b>未確認・要フォロー（'+unconfirmed.length+'名）</b><div class="preview-tags">' +
+    html += '<div class="preview-group unconfirmed"><b>未確認（'+unconfirmed.length+'名）</b><div class="preview-tags">' +
       (unconfirmed.length ? unconfirmed.map(function(m){ return tag(m); }).join('') : '<span class="empty-note" style="padding:0;">いません</span>') +
       '</div></div>';
     html += '<div class="preview-group leave"><b>退任予定（'+leaving.length+'名）</b><div class="preview-tags">' +
