@@ -1333,15 +1333,33 @@
       }
     });
 
+    // 誰が(どの役割の)個別後任として指名されているかを事前に集計しておく
+    var incomingRoleIdsByMember = {}; // memberId -> {roleId: true}
+    state.members.forEach(function(holder){
+      Object.keys(holder.successors || {}).forEach(function(rid){
+        var entry = holder.successors[rid];
+        if(entry && entry.type === 'member' && entry.value){
+          incomingRoleIdsByMember[entry.value] = incomingRoleIdsByMember[entry.value] || {};
+          incomingRoleIdsByMember[entry.value][rid] = true;
+        }
+      });
+    });
+
     function roleNamesFor(m){
-      var names = (m.roleIds||[]).map(function(rid){
-        if(abolishedRoleIds[rid]) return null;
+      var idSet = {};
+      (m.roleIds||[]).forEach(function(rid){
         var entry = (m.successors && m.successors[rid]) || null;
-        if(entry && entry.type === 'leaving') return null; // この役割だけ退任予定
+        if(entry && entry.type === 'leaving') return; // この役割だけ退任予定
+        idSet[rid] = true;
+      });
+      // 他の人から個別後任として指名されている役割も、来年度は本人の担当になる
+      Object.keys(incomingRoleIdsByMember[m.id] || {}).forEach(function(rid){ idSet[rid] = true; });
+
+      return Object.keys(idSet).map(function(rid){
+        if(abolishedRoleIds[rid]) return null;
         var role = state.roles.find(function(r){ return r.id === rid; });
         return role ? (role.name || '（名称未設定）') : null;
       }).filter(Boolean);
-      return names;
     }
 
     function tag(m, extra){
