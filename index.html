@@ -377,6 +377,7 @@
   .role-cell{
     display:flex; flex-direction:column; gap:5px; max-height:340px; overflow-y:auto;
     width:100%; padding:10px 12px; background:var(--paper); border:1px solid var(--paper-line);
+    margin-bottom:8px;
   }
   .role-cell label{display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink-soft); cursor:pointer; padding:6px 0;}
   .role-cell input[type=checkbox]{width:auto; accent-color:var(--hanko); transform:scale(1.15);}
@@ -421,7 +422,7 @@
 
 <nav class="tabs">
   <button id="tabBtnRoster" class="active">役員名簿</button>
-  <button id="tabBtnSchedule">募集スケジュール</button>
+  <button id="tabBtnSchedule">スケジュール管理</button>
 </nav>
 
 <main>
@@ -546,7 +547,7 @@
           <span class="card-caret">▼</span>
           <span>
             <h2>逆算スケジュール</h2>
-            <div class="hint">締切日・実施日から逆算して、準備の目安を組み立てます。いくつでも作成できます。</div>
+            <div class="hint">締切日・実施日から逆算して、準備の目安を組み立てます。いくつでも作成できます。役割一覧で「スケジュール管理タブでスケジュールを作る」をONにすると、ここに自動で追加されます。</div>
           </span>
         </button>
       </div>
@@ -596,6 +597,8 @@
   // ---------- state ----------
   // ↓ここをデプロイしたGASウェブアプリのURLに書き換えてください
   var GAS_URL = 'https://script.google.com/macros/s/AKfycbxQ_jCCnfbxNSzynjp77czBZMfxBMNODyCSTWA1eNvS_23VUxpSvlSx8lQN31xPI0bwxA/exec';
+  // ↓年度を進める操作を行う前に入力を求める合い言葉。ここを好きな言葉に書き換えてください。
+  var YEAR_ADVANCE_PASSCODE = 'unofest2026';
   var state = null;
 
   function defaultState(){
@@ -603,8 +606,8 @@
     return {
       baseFiscalYear: fiscalYearOf(today),
       roles: [
-        {id:r1, name:'会長', neededNextYear:1, abolishNextYear:false, roleType:'individual', nextYearRecruits:[], description:'', periodNote:'', resourceLink:''},
-        {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false, roleType:'team', nextYearRecruits:[], description:'', periodNote:'', resourceLink:''}
+        {id:r1, name:'会長', neededNextYear:1, abolishNextYear:false, roleType:'individual', nextYearRecruits:[], description:'', periodNote:'', resourceLink:'', scheduleEnabled:false, scheduleTargetDate:'', linkedScheduleId:null},
+        {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false, roleType:'team', nextYearRecruits:[], description:'', periodNote:'', resourceLink:'', scheduleEnabled:false, scheduleTargetDate:'', linkedScheduleId:null}
       ],
       members: [
         {id:uid(), name:'山田 太郎', roleIds:[r1], continueType:'thisYear', untilYear:currentFY, successors:{}, note:''},
@@ -642,6 +645,9 @@
       delete r.individualHandoff;
       delete r.isOrgWide;
       if(typeof r.resourceLink !== 'string') r.resourceLink = '';
+      if(typeof r.scheduleEnabled !== 'boolean') r.scheduleEnabled = false;
+      if(typeof r.scheduleTargetDate !== 'string') r.scheduleTargetDate = '';
+      if(typeof r.linkedScheduleId === 'undefined') r.linkedScheduleId = null;
       if(!Array.isArray(r.nextYearRecruits)) r.nextYearRecruits = [];
       r.nextYearRecruits = r.nextYearRecruits.map(function(x){
         return (typeof x === 'string') ? {type:'text', value:x} : x;
@@ -856,6 +862,12 @@
         '・複数人制の役割の「新規加入予定」に書いた人 → 正式なメンバーとして名簿に追加されます\n\n' +
         'よろしいですか？';
       if(!window.confirm(msg)){ fyInput.value = currentFY; return; }
+      var passcode = window.prompt('この操作は元に戻せません。続けるには合い言葉を入力してください。');
+      if(passcode === null || passcode.trim() !== YEAR_ADVANCE_PASSCODE){
+        if(passcode !== null) window.alert('合い言葉が違います。年度は変更されませんでした。');
+        fyInput.value = currentFY;
+        return;
+      }
       advanceFiscalYearTo(v);
       showSyncStatus(v + '年度に切り替えました');
     } else {
@@ -1011,6 +1023,14 @@
               '<label><input type="radio" name="rt-'+role.id+'" data-field="roleType" data-value="orgWide" data-id="'+role.id+'" '+(roleType==='orgWide'?'checked':'')+'> 執行部全体（個別の役割ではなく、全体に関わる内容を仕事内容メモに書くための特別な行）</label>' +
             '</div></div>' +
             '<label class="acc-check"><input type="checkbox" data-field="abolishNextYear" data-id="'+role.id+'" '+(role.abolishNextYear?'checked':'')+'> 廃止予定</label>' +
+            '<div class="acc-field">' +
+              '<label class="acc-check"><input type="checkbox" data-field="scheduleEnabled" data-id="'+role.id+'" '+(role.scheduleEnabled?'checked':'')+'> スケジュール管理タブでスケジュールを作る</label>' +
+              (role.scheduleEnabled ?
+                '<div style="margin-top:8px;"><span class="role-note-period-label">取り掛かる目安の時期（締切日・実施日）</span>' +
+                '<input type="date" data-field="scheduleTargetDate" data-id="'+role.id+'" value="'+esc(role.scheduleTargetDate||'')+'"></div>' +
+                (role.linkedScheduleId ? '<div class="acc-hint-note">「スケジュール管理」タブに「'+esc(role.name||'（名称未設定）')+'」として作成済みです。日付を変えると目安も更新されます。</div>' : '<div class="acc-hint-note">日付を入力すると、スケジュール管理タブに自動で作られます。</div>')
+                : '') +
+            '</div>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -1039,11 +1059,14 @@
       return '<div class="empty-note" style="padding:0;">役割未登録</div>';
     }
     var selected = m.roleIds || [];
-    return '<div class="role-cell">' + state.roles.map(function(role){
+    var boxes = '<div class="role-cell" data-member-id="'+m.id+'">' + state.roles.map(function(role){
       var checked = selected.indexOf(role.id) !== -1;
       var label = (role.name || '（名称未設定）') + (role.abolishNextYear ? '（廃止予定）' : '');
-      return '<label><input type="checkbox" data-field="roleIds" data-role="'+role.id+'" data-id="'+m.id+'" '+(checked?'checked':'')+'> '+esc(label)+'</label>';
+      return '<label><input type="checkbox" data-role="'+role.id+'" '+(checked?'checked':'')+'> '+esc(label)+'</label>';
     }).join('') + '</div>';
+    return boxes +
+      '<button type="button" class="btn small primary role-save-btn" data-action="saveRoleCheckboxes" data-id="'+m.id+'">この変更を保存</button>' +
+      '<div class="acc-hint-note">チェックしただけでは保存されません。上のボタンを押して保存してください。</div>';
   }
 
   function isSingleRole(role){
@@ -1790,7 +1813,7 @@
   });
 
   document.getElementById('addRoleBtn').addEventListener('click', function(){
-    state.roles.push({id:uid(), name:'', neededNextYear:1, abolishNextYear:false, roleType:'team', nextYearRecruits:[], description:'', periodNote:'', resourceLink:''});
+    state.roles.push({id:uid(), name:'', neededNextYear:1, abolishNextYear:false, roleType:'team', nextYearRecruits:[], description:'', periodNote:'', resourceLink:'', scheduleEnabled:false, scheduleTargetDate:'', linkedScheduleId:null});
     saveState(); renderAll();
   });
   document.getElementById('addMemberBtn').addEventListener('click', function(){
@@ -1900,6 +1923,23 @@
     state.members.forEach(function(m){ m.roleIds = (m.roleIds||[]).filter(function(rid){ return rid !== id; }); });
     saveState(); renderAll();
   });
+  // 役割に「スケジュール管理タブでスケジュールを作る」がONで日付が入っていれば、
+  // 対応するスケジュールを作成(初回)または更新(2回目以降、日付変更時)する。
+  function syncRoleSchedule(role){
+    if(!role.scheduleEnabled || !role.scheduleTargetDate) return;
+    var sc = role.linkedScheduleId ? state.schedules.find(function(s){ return s.id === role.linkedScheduleId; }) : null;
+    if(!sc){
+      sc = {id:uid(), name: role.name || '（名称未設定）', targetDate: role.scheduleTargetDate, tasks: []};
+      sc.tasks = generateTasks(sc);
+      state.schedules.push(sc);
+      role.linkedScheduleId = sc.id;
+    } else {
+      sc.name = role.name || sc.name;
+      sc.targetDate = role.scheduleTargetDate;
+      sc.tasks = generateTasks(sc);
+    }
+  }
+
   rolesBody.addEventListener('change', function(e){
     var t = e.target;
     var id = t.getAttribute('data-id');
@@ -1911,6 +1951,14 @@
     else if(field === 'neededNextYear') role.neededNextYear = Math.max(0, parseInt(t.value,10) || 0);
     else if(field === 'abolishNextYear') role.abolishNextYear = t.checked;
     else if(field === 'roleType') role.roleType = t.getAttribute('data-value');
+    else if(field === 'scheduleEnabled'){
+      role.scheduleEnabled = t.checked;
+      if(role.scheduleEnabled) syncRoleSchedule(role);
+    }
+    else if(field === 'scheduleTargetDate'){
+      role.scheduleTargetDate = t.value;
+      syncRoleSchedule(role);
+    }
     saveState(); renderAll();
   });
 
@@ -1961,13 +2009,9 @@
     var t = e.target;
     var id = t.getAttribute('data-id');
     var field = t.getAttribute('data-field');
-    if(!id || !field) return;
+    if(!id || !field) return; // 担当役割のチェックボックスにはdata-fieldを付けていないので、ここでは反応しない(保存ボタンでのみ確定)
     var member = state.members.find(function(m){ return m.id === id; });
     if(!member) return;
-
-    // 役割チェックボックスの操作では、その場でのスクロール位置を再描画後も保持する
-    var scrollCell = (field === 'roleIds') ? t.closest('.role-cell') : null;
-    var scrollTop = scrollCell ? scrollCell.scrollTop : null;
 
     if(field === 'name') member.name = t.value;
     else if(field === 'note') member.note = t.value;
@@ -1991,21 +2035,25 @@
       member.successors = member.successors || {};
       member.successors[rid2] = {type:'text', value:t.value};
     }
-    else if(field === 'roleIds'){
-      var rid = t.getAttribute('data-role');
-      member.roleIds = member.roleIds || [];
-      var idx = member.roleIds.indexOf(rid);
-      if(t.checked && idx === -1) member.roleIds.push(rid);
-      else if(!t.checked && idx !== -1) member.roleIds.splice(idx, 1);
-    }
     else if(field === 'continueType') member.continueType = t.getAttribute('data-value');
     else if(field === 'untilYear') member.untilYear = parseInt(t.value,10) || nextFY;
+    else return; // 上記のいずれでもなければ何もしない(例:担当役割チェックボックス)
     saveState(); renderAll();
+  });
 
-    if(scrollTop !== null){
-      var newCell = membersBody.querySelector('.acc-item[data-member-id="'+id+'"] .role-cell');
-      if(newCell) newCell.scrollTop = scrollTop;
-    }
+  membersBody.addEventListener('click', function(e){
+    var saveBtn = e.target.closest('[data-action="saveRoleCheckboxes"]');
+    if(!saveBtn) return;
+    var mid = saveBtn.getAttribute('data-id');
+    var member = state.members.find(function(m){ return m.id === mid; });
+    if(!member) return;
+    var cell = membersBody.querySelector('.role-cell[data-member-id="'+mid+'"]');
+    if(!cell) return;
+    var checked = [];
+    cell.querySelectorAll('input[type=checkbox]:checked').forEach(function(cb){ checked.push(cb.getAttribute('data-role')); });
+    member.roleIds = checked;
+    saveState(); renderAll();
+    showSyncStatus('担当役割を保存しました');
   });
 
   timelineWrap.addEventListener('click', function(e){
