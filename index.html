@@ -133,6 +133,7 @@
     background:var(--paper-alt);
   }
   .usage-guide{font-size:13px; line-height:1.8; color:var(--ink);}
+  .usage-lead{margin:0 0 8px; font-weight:700;}
   .usage-guide ul{margin:0; padding-left:18px;}
   .usage-guide li{margin-bottom:8px;}
   .usage-guide li:last-child{margin-bottom:0;}
@@ -174,6 +175,7 @@
   .acc-field-row{display:flex; gap:16px; flex-wrap:wrap; padding:12px 0; border-bottom:1px solid var(--paper-line);}
   .acc-field-row .acc-field{flex:1 1 140px; padding:0; border-bottom:none;}
   .acc-static{font-family:'JetBrains Mono',monospace; font-size:14px; padding:5px 2px;}
+  .acc-hint-note{font-size:11px; color:var(--ink-soft); margin-top:5px;}
   .acc-check{display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink); cursor:pointer; padding:6px 0;}
   .acc-check input{width:auto; accent-color:var(--hanko);}
   .needed-tag{font-size:11px; color:var(--ink-soft); font-weight:700;}
@@ -446,11 +448,12 @@
         </button>
       </div>
       <div class="usage-guide">
+        <p class="usage-lead">役割一覧で、それぞれの役割に「役割の種類」を1つ設定します。</p>
         <ul>
-          <li><b>個別後任</b>がONの役職（会長など）＝ 誰が誰に引き継ぐかを、メンバー一覧の「後任予定者」欄で1人ずつ指定します。</li>
-          <li>それ以外の役職（<b>複数人制</b>）＝ 担当者の追加・入れ替えは、個別に指定せず引き継ぎ一覧の「担当者を追加」で行います。</li>
-          <li><b>随時対応</b>＝ 教材選定委員会のように、そのとき空いている人がやればよい役割。人数の管理はしません。</li>
-          <li><b>執行部全体</b>＝ 特定の役割ではなく、全体で共有しておきたいことを仕事内容メモに書くための行です。</li>
+          <li><b>複数人制</b>（初期設定）＝ 監事のように複数人で担当する役割。担当者の追加・入れ替えは引き継ぎ一覧の「担当者を追加」で行います。</li>
+          <li><b>個別後任</b>＝ 会長のように1人だけが担当し、誰から誰に引き継ぐかをはっきり決めたい役職。メンバー一覧の「後任予定者」欄で1人ずつ指定します。</li>
+          <li><b>人数管理しない</b>＝ 教材選定委員会のように、そのとき対応できる人がやればよい役割。人数の過不足は管理しません。</li>
+          <li><b>執行部全体</b>＝ 特定の役割ではなく、執行部全体で共有しておきたい内容（定例会の日程や会計ルールなど）を仕事内容メモに書くための特別な行です。人数は管理しません。</li>
           <li>年度が変わったら、ページ上部の年度表示を書き換えると、退任予定の人が自動で名簿から整理されます（元には戻せないのでご注意ください）。</li>
         </ul>
         <div class="color-legend">
@@ -484,7 +487,7 @@
           <span class="card-caret">▼</span>
           <span>
             <h2>役割一覧</h2>
-            <div class="hint">来年度に必要な人数と、廃止予定の役割を管理します。「個別後任」は会長など、誰から誰に引き継ぐかを具体的に決めたい役職だけONにしてください。</div>
+            <div class="hint">来年度に必要な人数と、廃止予定の役割を管理します。それぞれの役割に「役割の種類」（複数人制／個別後任／人数管理しない／執行部全体）を1つ設定してください。</div>
           </span>
         </button>
         <button class="btn primary" id="addRoleBtn">＋ 役割を追加</button>
@@ -600,8 +603,8 @@
     return {
       baseFiscalYear: fiscalYearOf(today),
       roles: [
-        {id:r1, name:'会長', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:true, isOrgWide:false, nextYearRecruits:[], description:'', periodNote:'', resourceLink:''},
-        {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false, flexible:false, individualHandoff:false, isOrgWide:false, nextYearRecruits:[], description:'', periodNote:'', resourceLink:''}
+        {id:r1, name:'会長', neededNextYear:1, abolishNextYear:false, roleType:'individual', nextYearRecruits:[], description:'', periodNote:'', resourceLink:''},
+        {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false, roleType:'team', nextYearRecruits:[], description:'', periodNote:'', resourceLink:''}
       ],
       members: [
         {id:uid(), name:'山田 太郎', roleIds:[r1], continueType:'thisYear', untilYear:currentFY, successors:{}, note:''},
@@ -629,9 +632,15 @@
     delete s.scheduleTargetDate;
     delete s.scheduleTasks;
     (s.roles || []).forEach(function(r){
-      if(typeof r.flexible !== 'boolean') r.flexible = false;
-      if(typeof r.individualHandoff !== 'boolean') r.individualHandoff = (r.neededNextYear || 0) <= 1;
-      if(typeof r.isOrgWide !== 'boolean') r.isOrgWide = false;
+      if(typeof r.roleType !== 'string'){
+        if(r.isOrgWide) r.roleType = 'orgWide';
+        else if(r.flexible) r.roleType = 'flexible';
+        else if(r.individualHandoff || (typeof r.individualHandoff !== 'boolean' && (r.neededNextYear||0) <= 1)) r.roleType = 'individual';
+        else r.roleType = 'team';
+      }
+      delete r.flexible;
+      delete r.individualHandoff;
+      delete r.isOrgWide;
       if(typeof r.resourceLink !== 'string') r.resourceLink = '';
       if(!Array.isArray(r.nextYearRecruits)) r.nextYearRecruits = [];
       r.nextYearRecruits = r.nextYearRecruits.map(function(x){
@@ -960,9 +969,9 @@
       rolesBody.innerHTML = state.roles.map(function(role, idx){
         var stats = roleStats(role);
         var abolished = role.abolishNextYear;
-        var flexible = !!role.flexible;
-        var individualHandoff = !!role.individualHandoff;
-        var isOrgWide = !!role.isOrgWide;
+        var roleType = role.roleType || 'team';
+        var flexible = roleType === 'flexible';
+        var isOrgWide = roleType === 'orgWide';
         var effNextYear = effectiveNextYearCount(role);
         var short = !abolished && !flexible && !isOrgWide && effNextYear < role.neededNextYear;
         var badge;
@@ -971,7 +980,7 @@
         } else if(isOrgWide){
           badge = '<span class="badge neutral">執行部全体</span>';
         } else if(flexible){
-          badge = '<span class="badge neutral">随時対応</span>';
+          badge = '<span class="badge neutral">人数管理しない</span>';
         } else if(short){
           badge = '<span class="badge short">不足 (あと' + (role.neededNextYear - effNextYear) + '名)</span>';
         } else {
@@ -994,13 +1003,13 @@
           '</div>' +
           '<div class="acc-body" style="display:'+(isOpen?'block':'none')+';">' +
             '<div class="acc-field"><label>役割名</label><input type="text" data-field="name" data-id="'+role.id+'" value="'+esc(role.name)+'" placeholder="役割名"></div>' +
-            '<div class="acc-field-row">' +
-              '<div class="acc-field"><label>来年度必要人数</label><input type="number" min="0" data-field="neededNextYear" data-id="'+role.id+'" value="'+role.neededNextYear+'" '+((flexible||isOrgWide)?'disabled':'')+'></div>' +
-              '<div class="acc-field"><label>現員数</label><div class="acc-static">'+stats.current+'名</div></div>' +
-            '</div>' +
-            '<label class="acc-check"><input type="checkbox" data-field="individualHandoff" data-id="'+role.id+'" '+(individualHandoff?'checked':'')+' '+((flexible||isOrgWide)?'disabled':'')+'> 個別後任（誰から誰かを指定する）</label>' +
-            '<label class="acc-check"><input type="checkbox" data-field="flexible" data-id="'+role.id+'" '+(flexible?'checked':'')+' '+(isOrgWide?'disabled':'')+'> 随時対応（人数管理しない）</label>' +
-            '<label class="acc-check"><input type="checkbox" data-field="isOrgWide" data-id="'+role.id+'" '+(isOrgWide?'checked':'')+'> 執行部全体（全体共通の行）</label>' +
+            '<div class="acc-field"><label>来年度必要人数</label><input type="number" min="0" data-field="neededNextYear" data-id="'+role.id+'" value="'+role.neededNextYear+'" '+((flexible||isOrgWide)?'disabled':'')+'>'+((flexible||isOrgWide)?'<div class="acc-hint-note">人数管理しない／執行部全体の行では使いません</div>':'')+'</div>' +
+            '<div class="acc-field"><label>役割の種類</label><div class="continue-cell">' +
+              '<label><input type="radio" name="rt-'+role.id+'" data-field="roleType" data-value="team" data-id="'+role.id+'" '+(roleType==='team'?'checked':'')+'> 複数人制（担当者の追加・入れ替えは引き継ぎ一覧で行う）</label>' +
+              '<label><input type="radio" name="rt-'+role.id+'" data-field="roleType" data-value="individual" data-id="'+role.id+'" '+(roleType==='individual'?'checked':'')+'> 個別後任（1人が担当し、誰から誰に引き継ぐかをメンバー一覧で指定する）</label>' +
+              '<label><input type="radio" name="rt-'+role.id+'" data-field="roleType" data-value="flexible" data-id="'+role.id+'" '+(roleType==='flexible'?'checked':'')+'> 人数管理しない（そのとき対応できる人がやればよい役割）</label>' +
+              '<label><input type="radio" name="rt-'+role.id+'" data-field="roleType" data-value="orgWide" data-id="'+role.id+'" '+(roleType==='orgWide'?'checked':'')+'> 執行部全体（個別の役割ではなく、全体に関わる内容を仕事内容メモに書くための特別な行）</label>' +
+            '</div></div>' +
             '<label class="acc-check"><input type="checkbox" data-field="abolishNextYear" data-id="'+role.id+'" '+(role.abolishNextYear?'checked':'')+'> 廃止予定</label>' +
           '</div>' +
         '</div>';
@@ -1008,7 +1017,8 @@
     }
 
     var shorts = state.roles.filter(function(role){
-      if(role.abolishNextYear || role.flexible || role.isOrgWide) return false;
+      var roleType = role.roleType || 'team';
+      if(role.abolishNextYear || roleType === 'flexible' || roleType === 'orgWide') return false;
       return effectiveNextYearCount(role) < role.neededNextYear;
     });
     if(shorts.length === 0){
@@ -1037,7 +1047,7 @@
   }
 
   function isSingleRole(role){
-    return !!role && !role.flexible && !!role.individualHandoff;
+    return !!role && role.roleType === 'individual';
   }
 
   // 継続予定に応じて「本人が続投」を出していいかどうかのラベルを返す。
@@ -1055,7 +1065,7 @@
     if(heldRoles.length === 0){
       return '<div class="empty-note" style="padding:4px 0;">（担当役割未設定）</div>';
     }
-    var trackedRoles = heldRoles.filter(function(r){ return !r.flexible && !r.isOrgWide; });
+    var trackedRoles = heldRoles.filter(function(r){ return r.roleType !== 'flexible' && r.roleType !== 'orgWide'; });
     var singleRoles = trackedRoles.filter(isSingleRole);
     // 本人が継続する予定でない場合、複数人制の役割は（本人ごと名簿から外れるだけなので）個別に聞く必要がない
     var teamRoles = overallContinuing ? trackedRoles.filter(function(r){ return !isSingleRole(r); }) : [];
@@ -1316,7 +1326,7 @@
     saveState(); renderAll();
   }
 
-  // 随時対応の役割: 「来年度の予定」ではなく、その場で今の担当者として直接追加する
+  // 人数管理しない役割: 「来年度の予定」ではなく、その場で今の担当者として直接追加する
   function addFlexMember(roleId){
     var select = handoffList.querySelector('.flex-add-select[data-role="'+roleId+'"]');
     if(!select) return;
@@ -1556,12 +1566,12 @@
 
     var rows = [];
     state.roles.forEach(function(role){
-      if(role.isOrgWide) return; // 執行部全体の行は実質的な役割ではないため対象外
+      if(role.roleType === 'orgWide') return; // 執行部全体の行は実質的な役割ではないため対象外
       var mems = byRole[role.id] || [];
       var single = isSingleRole(role);
 
-      if(role.flexible){
-        // 随時対応: 人数管理はしないが、一覧からは消さず「今誰がやっているか」を見せ、その場で担当者を追加できるようにする
+      if(role.roleType === 'flexible'){
+        // 人数管理しない役割: 一覧からは消さず「今誰がやっているか」を見せ、その場で担当者を追加できるようにする
         var flexMembersHtml = mems.length
           ? splitMembersHtml(mems, role)
           : '<span class="succ-note">担当者未設定（人数管理はしません）</span>';
@@ -1653,7 +1663,7 @@
     handoffList.innerHTML = rows.map(function(r){
       var tag = r.kind === 'team'
         ? ' <span class="succ-note">（複数人制）</span> <span class="needed-tag">'+(r.role.neededNextYear||0)+'名必要</span>'
-        : (r.kind === 'flexible' ? ' <span class="succ-note">（随時対応）</span>' : '');
+        : (r.kind === 'flexible' ? ' <span class="succ-note">（人数管理しない）</span>' : '');
       return '<div class="handoff-row'+(r.kind!=='single'?' team':'')+'"><span class="handoff-role">'+esc(r.role.name||'（名称未設定）')+tag+'</span><span class="handoff-chain">'+r.chain+'</span></div>';
     }).join('');
   }
@@ -1676,10 +1686,10 @@
       '<div class="role-note-item'+(isOpen?' open':'')+'" data-role-id="'+role.id+'">' +
         '<button type="button" class="role-note-head" data-action="toggleRoleNote" data-id="'+role.id+'">' +
           '<span class="role-note-caret">'+(isOpen?'▼':'▶')+'</span>' +
-          esc(role.name || '（名称未設定）')+(role.isOrgWide?' <span class="succ-note">（執行部全体）</span>':'') +
+          esc(role.name || '（名称未設定）')+(role.roleType==='orgWide'?' <span class="succ-note">（執行部全体）</span>':'') +
         '</button>' +
         '<div class="role-note-body" style="display:'+(isOpen?'block':'none')+';">' +
-          '<textarea class="auto-grow" rows="2" data-field="description" data-id="'+role.id+'" placeholder="'+(role.isOrgWide?'執行部全体で共有しておきたいこと（例：定例会は毎月第2土曜10時〜。会計処理は毎月末までに提出。）':'仕事内容（例：月1回の会報作成、行事写真の撮影など）')+'">'+esc(role.description||'')+'</textarea>' +
+          '<textarea class="auto-grow" rows="2" data-field="description" data-id="'+role.id+'" placeholder="'+(role.roleType==='orgWide'?'執行部全体で共有しておきたいこと（例：定例会は毎月第2土曜10時〜。会計処理は毎月末までに提出。）':'仕事内容（例：月1回の会報作成、行事写真の撮影など）')+'">'+esc(role.description||'')+'</textarea>' +
           '<span class="role-note-period-label">実施時期・任期の目安</span>' +
           '<textarea class="auto-grow" rows="2" data-field="periodNote" data-id="'+role.id+'" placeholder="例：4〜6月のみ／通年／運動会前後">'+esc(role.periodNote||'')+'</textarea>' +
           '<span class="role-note-period-label">関連資料のリンク（PDFなどをGoogleドライブ等で共有したURL）</span>' +
@@ -1780,7 +1790,7 @@
   });
 
   document.getElementById('addRoleBtn').addEventListener('click', function(){
-    state.roles.push({id:uid(), name:'', neededNextYear:1, abolishNextYear:false, flexible:false, individualHandoff:false, isOrgWide:false, nextYearRecruits:[], description:'', periodNote:'', resourceLink:''});
+    state.roles.push({id:uid(), name:'', neededNextYear:1, abolishNextYear:false, roleType:'team', nextYearRecruits:[], description:'', periodNote:'', resourceLink:''});
     saveState(); renderAll();
   });
   document.getElementById('addMemberBtn').addEventListener('click', function(){
@@ -1900,9 +1910,7 @@
     if(field === 'name') role.name = t.value;
     else if(field === 'neededNextYear') role.neededNextYear = Math.max(0, parseInt(t.value,10) || 0);
     else if(field === 'abolishNextYear') role.abolishNextYear = t.checked;
-    else if(field === 'flexible') role.flexible = t.checked;
-    else if(field === 'individualHandoff') role.individualHandoff = t.checked;
-    else if(field === 'isOrgWide') role.isOrgWide = t.checked;
+    else if(field === 'roleType') role.roleType = t.getAttribute('data-value');
     saveState(); renderAll();
   });
 
