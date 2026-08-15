@@ -606,8 +606,8 @@
     return {
       baseFiscalYear: fiscalYearOf(today),
       roles: [
-        {id:r1, name:'会長', neededNextYear:1, abolishNextYear:false, roleType:'individual', nextYearRecruits:[], description:'', periodNote:'', resourceLink:'', scheduleEnabled:false, scheduleTargetDate:'', linkedScheduleId:null},
-        {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false, roleType:'team', nextYearRecruits:[], description:'', periodNote:'', resourceLink:'', scheduleEnabled:false, scheduleTargetDate:'', linkedScheduleId:null}
+        {id:r1, name:'会長', neededNextYear:1, abolishNextYear:false, roleType:'individual', nextYearRecruits:[], description:'', periodNote:'', resourceLink:'', scheduleEnabled:false, scheduleStartDate:'', scheduleTargetDate:'', linkedScheduleId:null},
+        {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false, roleType:'team', nextYearRecruits:[], description:'', periodNote:'', resourceLink:'', scheduleEnabled:false, scheduleStartDate:'', scheduleTargetDate:'', linkedScheduleId:null}
       ],
       members: [
         {id:uid(), name:'山田 太郎', roleIds:[r1], continueType:'thisYear', untilYear:currentFY, successors:{}, note:''},
@@ -627,10 +627,14 @@
       s.schedules.push({
         id: uid(),
         name: s.scheduleEventName || 'スケジュール1',
+        startDate: '',
         targetDate: s.scheduleTargetDate || '',
         tasks: s.scheduleTasks || []
       });
     }
+    (s.schedules || []).forEach(function(sc){
+      if(typeof sc.startDate !== 'string') sc.startDate = '';
+    });
     delete s.scheduleEventName;
     delete s.scheduleTargetDate;
     delete s.scheduleTasks;
@@ -646,6 +650,7 @@
       delete r.isOrgWide;
       if(typeof r.resourceLink !== 'string') r.resourceLink = '';
       if(typeof r.scheduleEnabled !== 'boolean') r.scheduleEnabled = false;
+      if(typeof r.scheduleStartDate !== 'string') r.scheduleStartDate = '';
       if(typeof r.scheduleTargetDate !== 'string') r.scheduleTargetDate = '';
       if(typeof r.linkedScheduleId === 'undefined') r.linkedScheduleId = null;
       if(!Array.isArray(r.nextYearRecruits)) r.nextYearRecruits = [];
@@ -685,6 +690,21 @@
   function generateTasks(schedule){
     var target = schedule.targetDate;
     if(!target) return [];
+    var start = schedule.startDate;
+    var n = TASK_TEMPLATE.length;
+    if(start){
+      // 開始日が指定されている場合は、開始日〜実施日の間に均等に割り振る
+      var totalDays = Math.round((parseISO(target) - parseISO(start)) / 86400000);
+      if(totalDays < 0) totalDays = 0;
+      return TASK_TEMPLATE.map(function(t, idx){
+        var name = t.name;
+        if(t.weeksBefore === 0){
+          name = (schedule.name || '').trim() || '実施日 / 締切日';
+        }
+        var frac = idx / (n - 1); // 0=開始日, 1=実施日
+        return {id:uid(), name:name, date: addDaysISO(start, Math.round(totalDays * frac))};
+      });
+    }
     return TASK_TEMPLATE.map(function(t){
       var name = t.name;
       if(t.weeksBefore === 0){
@@ -1026,9 +1046,11 @@
             '<div class="acc-field">' +
               '<label class="acc-check"><input type="checkbox" data-field="scheduleEnabled" data-id="'+role.id+'" '+(role.scheduleEnabled?'checked':'')+'> スケジュール管理タブでスケジュールを作る</label>' +
               (role.scheduleEnabled ?
-                '<div style="margin-top:8px;"><span class="role-note-period-label">取り掛かる目安の時期（締切日・実施日）</span>' +
+                '<div style="margin-top:8px;"><span class="role-note-period-label">開始日（任意・取り掛かり始める目安）</span>' +
+                '<input type="date" data-field="scheduleStartDate" data-id="'+role.id+'" value="'+esc(role.scheduleStartDate||'')+'"></div>' +
+                '<div style="margin-top:8px;"><span class="role-note-period-label">実施日・締切日</span>' +
                 '<input type="date" data-field="scheduleTargetDate" data-id="'+role.id+'" value="'+esc(role.scheduleTargetDate||'')+'"></div>' +
-                (role.linkedScheduleId ? '<div class="acc-hint-note">「スケジュール管理」タブに「'+esc(role.name||'（名称未設定）')+'」として作成済みです。日付を変えると目安も更新されます。</div>' : '<div class="acc-hint-note">日付を入力すると、スケジュール管理タブに自動で作られます。</div>')
+                (role.linkedScheduleId ? '<div class="acc-hint-note">「スケジュール管理」タブに「'+esc(role.name||'（名称未設定）')+'」として作成済みです。日付を変えると項目日程が再生成されます。</div>' : '<div class="acc-hint-note">実施日を入力すると、スケジュール管理タブに自動で作られます。開始日も入れると、開始日〜実施日の間で均等に準備日程が組まれます（未入力なら実施日の9週間前を起点にします）。</div>')
                 : '') +
             '</div>' +
           '</div>' +
@@ -1231,6 +1253,7 @@
     }
     scheduleEditorWrap.innerHTML = '' +
       '<div class="field"><label>スケジュール名</label><input type="text" id="scheduleNameInput" value="'+esc(sc.name)+'" placeholder="例：懇親会の案内配布"></div>' +
+      '<div class="field"><label>開始日（任意）</label><input type="date" id="startDateInput" value="'+(sc.startDate||'')+'"></div>' +
       '<div class="field"><label>締切日 / 実施予定日</label><input type="date" id="targetDateInput" value="'+(sc.targetDate||'')+'"></div>' +
       '<button class="btn" id="regenBtn">◎ 目安のスケジュールを生成</button>' +
       '<button class="btn primary" id="addTaskBtn">＋ 項目を追加</button>' +
@@ -1245,7 +1268,7 @@
       timelineWrap.innerHTML = '<div class="empty-note">まだ項目がありません。締切日を入力して「◎ 目安のスケジュールを生成」を押すか、「＋ 項目を追加」で作成してください。</div>';
       return;
     }
-    var sorted = sc.tasks.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+    var sorted = sc.tasks.slice().sort(function(a,b){ return a.date < b.date ? -1 : 1; });
     timelineWrap.innerHTML = sorted.map(function(t){
       var daysHtml = '';
       if(target){
@@ -1813,7 +1836,7 @@
   });
 
   document.getElementById('addRoleBtn').addEventListener('click', function(){
-    state.roles.push({id:uid(), name:'', neededNextYear:1, abolishNextYear:false, roleType:'team', nextYearRecruits:[], description:'', periodNote:'', resourceLink:'', scheduleEnabled:false, scheduleTargetDate:'', linkedScheduleId:null});
+    state.roles.push({id:uid(), name:'', neededNextYear:1, abolishNextYear:false, roleType:'team', nextYearRecruits:[], description:'', periodNote:'', resourceLink:'', scheduleEnabled:false, scheduleStartDate:'', scheduleTargetDate:'', linkedScheduleId:null});
     saveState(); renderAll();
   });
   document.getElementById('addMemberBtn').addEventListener('click', function(){
@@ -1823,7 +1846,7 @@
   scheduleTabsWrap.addEventListener('click', function(e){
     var addBtn = e.target.closest('[data-action="addSchedule"]');
     if(addBtn){
-      var sc = {id:uid(), name:'新しいスケジュール', targetDate:'', tasks:[]};
+      var sc = {id:uid(), name:'新しいスケジュール', startDate:'', targetDate:'', tasks:[]};
       state.schedules.push(sc);
       activeScheduleId = sc.id;
       saveState(); renderAll();
@@ -1868,6 +1891,9 @@
     if(e.target.id === 'scheduleNameInput'){
       sc.name = e.target.value;
       saveState(); renderScheduleTabs(); renderCalendar();
+    } else if(e.target.id === 'startDateInput'){
+      sc.startDate = e.target.value;
+      saveState();
     } else if(e.target.id === 'targetDateInput'){
       if(e.target.value){
         sc.targetDate = e.target.value;
@@ -1926,18 +1952,26 @@
   // 役割に「スケジュール管理タブでスケジュールを作る」がONで日付が入っていれば、
   // 対応するスケジュールを作成(初回)または更新(2回目以降、日付変更時)する。
   function syncRoleSchedule(role){
-    if(!role.scheduleEnabled || !role.scheduleTargetDate) return;
+    if(!role.scheduleEnabled || !role.scheduleTargetDate) return false;
     var sc = role.linkedScheduleId ? state.schedules.find(function(s){ return s.id === role.linkedScheduleId; }) : null;
     if(!sc){
-      sc = {id:uid(), name: role.name || '（名称未設定）', targetDate: role.scheduleTargetDate, tasks: []};
+      sc = {id:uid(), name: role.name || '（名称未設定）', startDate: role.scheduleStartDate||'', targetDate: role.scheduleTargetDate, tasks: []};
       sc.tasks = generateTasks(sc);
       state.schedules.push(sc);
       role.linkedScheduleId = sc.id;
-    } else {
-      sc.name = role.name || sc.name;
-      sc.targetDate = role.scheduleTargetDate;
-      sc.tasks = generateTasks(sc);
+      return true;
     }
+    // 既に項目(タスク)がある場合、日付変更は内容を作り直すため、上書きしてよいか確認する
+    if(sc.tasks && sc.tasks.length > 0){
+      if(!window.confirm('日付を変更すると、「'+(sc.name||'（名称未設定）')+'」の項目日程が作り直されます。\n手動で編集した内容がある場合は上書きされます。よろしいですか？')){
+        return false;
+      }
+    }
+    sc.name = role.name || sc.name;
+    sc.startDate = role.scheduleStartDate || '';
+    sc.targetDate = role.scheduleTargetDate;
+    sc.tasks = generateTasks(sc);
+    return true;
   }
 
   rolesBody.addEventListener('change', function(e){
@@ -1955,9 +1989,15 @@
       role.scheduleEnabled = t.checked;
       if(role.scheduleEnabled) syncRoleSchedule(role);
     }
+    else if(field === 'scheduleStartDate'){
+      var prevStart = role.scheduleStartDate;
+      role.scheduleStartDate = t.value;
+      if(!syncRoleSchedule(role)){ role.scheduleStartDate = prevStart; t.value = prevStart || ''; }
+    }
     else if(field === 'scheduleTargetDate'){
+      var prevTarget = role.scheduleTargetDate;
       role.scheduleTargetDate = t.value;
-      syncRoleSchedule(role);
+      if(!syncRoleSchedule(role)){ role.scheduleTargetDate = prevTarget; t.value = prevTarget || ''; }
     }
     saveState(); renderAll();
   });
