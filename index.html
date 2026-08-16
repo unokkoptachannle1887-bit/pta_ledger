@@ -134,6 +134,17 @@
   }
   .usage-guide{font-size:13px; line-height:1.8; color:var(--ink);}
   .usage-lead{margin:0 0 8px; font-weight:700;}
+  .mini-help{
+    margin-bottom:16px; border:1px solid var(--paper-line); background:var(--paper-alt);
+    font-size:12.5px; color:var(--ink);
+  }
+  .mini-help summary{
+    padding:9px 12px; cursor:pointer; color:var(--gold); font-weight:700; list-style:none;
+  }
+  .mini-help summary::-webkit-details-marker{display:none;}
+  .mini-help summary::before{content:'▶ '; font-size:10px;}
+  .mini-help[open] summary::before{content:'▼ ';}
+  .mini-help-body{padding:0 12px 12px; line-height:1.7; color:var(--ink-soft);}
   .usage-guide ul{margin:0; padding-left:18px;}
   .usage-guide li{margin-bottom:8px;}
   .usage-guide li:last-child{margin-bottom:0;}
@@ -466,10 +477,10 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card collapsed">
       <div class="card-head">
         <button type="button" class="card-toggle" data-action="toggleCard">
-          <span class="card-caret">▼</span>
+          <span class="card-caret">▶</span>
           <span>
             <h2>メンバー一覧</h2>
             <div class="hint">氏名・担当役割・続投予定を入力してください。1人が個別に引き継ぐ役割（会長など）の後任は、ここの「後任予定者」欄で指定できます。</div>
@@ -478,14 +489,17 @@
         <button class="btn primary" id="addMemberBtn">＋ メンバーを追加</button>
       </div>
       <div class="acc-search"><input type="text" id="memberSearchInput" placeholder="🔍 氏名・役割名で絞り込み"></div>
+      <details class="mini-help"><summary>使い方</summary><div class="mini-help-body">
+        氏名を入力し、「担当役割」で該当する役割にチェックを入れたら、必ず「この変更を保存」ボタンを押してください（チェックしただけでは保存されません）。継続予定を選ぶと、後任予定者の欄が自動で切り替わります。
+      </div></details>
       <div id="membersBody" class="acc-list"></div>
       <div class="empty-note" id="memberSearchEmpty" style="display:none;">該当するメンバーが見つかりません。</div>
     </div>
 
-    <div class="card">
+    <div class="card collapsed">
       <div class="card-head">
         <button type="button" class="card-toggle" data-action="toggleCard">
-          <span class="card-caret">▼</span>
+          <span class="card-caret">▶</span>
           <span>
             <h2>役割一覧</h2>
             <div class="hint">来年度に必要な人数と、廃止予定の役割を管理します。それぞれの役割に「役割の種類」（複数人制／個別後任／人数管理しない／執行部全体）を1つ設定してください。</div>
@@ -494,57 +508,69 @@
         <button class="btn primary" id="addRoleBtn">＋ 役割を追加</button>
       </div>
       <div class="acc-search"><input type="text" id="roleSearchInput" placeholder="🔍 役割名で絞り込み"></div>
+      <details class="mini-help"><summary>使い方</summary><div class="mini-help-body">
+        役割の種類は必ず1つ選んでください。会長のような1人だけの役職は「個別後任」、監事のように複数人で担当する役割は「複数人制」を選びます。「人数管理しない」「執行部全体」を選んだ役割は、来年度必要人数の入力は使いません。
+      </div></details>
       <div id="rolesBody" class="acc-list"></div>
       <div class="empty-note" id="roleSearchEmpty" style="display:none;">該当する役割が見つかりません。</div>
       <div id="shortageSummary" class="shortage-summary"></div>
     </div>
 
-    <div class="card">
+    <div class="card collapsed">
       <div class="card-head">
         <button type="button" class="card-toggle" data-action="toggleCard">
-          <span class="card-caret">▼</span>
+          <span class="card-caret">▶</span>
           <span>
             <h2>引き継ぎ一覧</h2>
             <div class="hint">誰の役割が誰に引き継がれるか（退任予定者→後任予定者）をまとめます。複数人体制の役割（監事など）の担当者追加・入れ替えはここで行います。</div>
           </span>
         </button>
       </div>
+      <details class="mini-help"><summary>使い方</summary><div class="mini-help-body">
+        「個別後任」の役職は、メンバー一覧で指定した後任予定者がここに自動で表示されます。「複数人制」「人数管理しない」の役割は、ここで直接「担当者を追加」から人を追加・入れ替えできます。
+      </div></details>
       <div class="handoff-list" id="handoffList"></div>
     </div>
 
-    <div class="card">
+    <div class="card collapsed">
       <div class="card-head">
         <button type="button" class="card-toggle" data-action="toggleCard">
-          <span class="card-caret">▼</span>
+          <span class="card-caret">▶</span>
           <span>
             <h2>来年度の見込み</h2>
             <div class="hint">今の設定のまま年度を進めた場合、誰が残り・誰が抜けるかのプレビューです（実際にはまだ何も変わりません）。</div>
           </span>
         </button>
       </div>
+      <details class="mini-help"><summary>使い方</summary><div class="mini-help-body">
+        あくまで見込み表示なので、ここを見ても何も変わりません。「未確認」の人が多い場合は、早めに継続するかどうか確認しておくと、実際に年度を進めるときに慌てずに済みます。
+      </div></details>
       <div id="nextYearPreview"></div>
     </div>
 
-    <div class="card">
+    <div class="card collapsed">
       <div class="card-head">
         <button type="button" class="card-toggle" data-action="toggleCard">
-          <span class="card-caret">▼</span>
+          <span class="card-caret">▶</span>
           <span>
             <h2>仕事内容メモ</h2>
             <div class="hint">役職ごとの仕事内容や実施時期を書き残せます。執行部全体で共有したいことは、役割一覧で「執行部全体」にチェックした行にまとめて書いてください。次の担当者への引き継ぎにお使いください。行をタップすると開閉します。</div>
           </span>
         </button>
       </div>
+      <details class="mini-help"><summary>使い方</summary><div class="mini-help-body">
+        各行はタップで開閉します。関連資料のリンクには、PDFなどをGoogleドライブ等にアップロードして発行した共有URLを貼ってください（このアプリ自体にファイルを保存することはできません）。
+      </div></details>
       <div id="roleNotesWrap"></div>
     </div>
   </section>
 
   <!-- SCHEDULE PANEL -->
   <section class="panel" id="panelSchedule">
-    <div class="card">
+    <div class="card collapsed">
       <div class="card-head">
         <button type="button" class="card-toggle" data-action="toggleCard">
-          <span class="card-caret">▼</span>
+          <span class="card-caret">▶</span>
           <span>
             <h2>逆算スケジュール</h2>
             <div class="hint">締切日・実施日から逆算して、準備の目安を組み立てます。いくつでも作成できます。役割一覧で「スケジュール管理タブでスケジュールを作る」をONにすると、ここに自動で追加されます。</div>
@@ -552,16 +578,19 @@
         </button>
       </div>
 
+      <details class="mini-help"><summary>使い方</summary><div class="mini-help-body">
+        締切日・実施日だけ入れれば9週間前を起点に自動生成されますが、開始日も入れると、開始日〜実施日の間で準備日程が均等に配分されます。役割一覧の「スケジュール管理タブでスケジュールを作る」から自動で作ることもできます。
+      </div></details>
       <div class="sched-tabs" id="scheduleTabs"></div>
       <div class="sched-editor" id="scheduleEditor"></div>
 
       <div class="timeline" id="timelineWrap"></div>
     </div>
 
-    <div class="card">
+    <div class="card collapsed">
       <div class="card-head">
         <button type="button" class="card-toggle" data-action="toggleCard">
-          <span class="card-caret">▼</span>
+          <span class="card-caret">▶</span>
           <span>
             <h2>カレンダー</h2>
             <div class="hint" id="calendarHint">赤い点がついている日は、選択中のスケジュールの予定日です。</div>
@@ -892,6 +921,7 @@
       showSyncStatus(v + '年度に切り替えました');
     } else {
       // 過去の年度に戻す場合は、しまう処理はせず年度表示だけを訂正する
+      if(!window.confirm(currentFY+'年度から'+v+'年度の表示に訂正します。よろしいですか？')){ fyInput.value = currentFY; return; }
       state.baseFiscalYear = v;
       syncFiscalYear();
       saveState();
@@ -1411,8 +1441,11 @@
       var roleId2 = rmBtn.getAttribute('data-role');
       var idx = parseInt(rmBtn.getAttribute('data-idx'), 10);
       var role2 = state.roles.find(function(r){ return r.id === roleId2; });
-      if(role2 && role2.nextYearRecruits) role2.nextYearRecruits.splice(idx, 1);
-      saveState(); renderAll();
+      if(role2 && role2.nextYearRecruits && role2.nextYearRecruits[idx]){
+        if(!window.confirm('この新規加入予定を取り消します。よろしいですか？')) return;
+        role2.nextYearRecruits.splice(idx, 1);
+        saveState(); renderAll();
+      }
     }
   });
   handoffList.addEventListener('change', function(e){
@@ -1878,7 +1911,9 @@
       return;
     }
     if(e.target.closest('#deleteScheduleBtn')){
+      if(!window.confirm('「'+(sc.name||'（名称未設定）')+'」のスケジュールを削除します。中の項目もすべて削除され、元には戻せません。よろしいですか？')) return;
       state.schedules = state.schedules.filter(function(s){ return s.id !== sc.id; });
+      state.roles.forEach(function(r){ if(r.linkedScheduleId === sc.id) r.linkedScheduleId = null; });
       activeScheduleId = null;
       saveState(); renderAll();
       return;
@@ -2102,6 +2137,8 @@
     var sc = getActiveSchedule();
     if(!sc) return;
     var id = btn.getAttribute('data-id');
+    var task = sc.tasks.find(function(t){ return t.id === id; });
+    if(!window.confirm('「'+(task && task.name ? task.name : 'この項目')+'」を削除します。よろしいですか？')) return;
     sc.tasks = sc.tasks.filter(function(t){ return t.id !== id; });
     saveState(); renderTimeline(); renderCalendar();
   });
