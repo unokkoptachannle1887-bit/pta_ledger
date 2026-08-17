@@ -2106,12 +2106,14 @@
           '<span class="role-note-caret">'+(isOpen?'▼':'▶')+'</span>' +
           esc(role.name || '（名称未設定）')+(role.roleType==='orgWide'?' <span class="succ-note">（執行部全体）</span>':'') +
         '</button>' +
-        '<div class="role-note-body" style="display:'+(isOpen?'block':'none')+';">' +
-          '<textarea class="auto-grow" rows="2" data-field="description" data-id="'+role.id+'" placeholder="'+(role.roleType==='orgWide'?'執行部全体で共有しておきたいこと（例：定例会は毎月第2土曜10時〜。会計処理は毎月末までに提出。）':'仕事内容（例：月1回の会報作成、行事写真の撮影など）')+'">'+esc(role.description||'')+'</textarea>' +
+        '<div class="role-note-body" data-role-id="'+role.id+'" style="display:'+(isOpen?'block':'none')+';">' +
+          '<textarea class="auto-grow" rows="2" data-field="description" placeholder="'+(role.roleType==='orgWide'?'執行部全体で共有しておきたいこと（例：定例会は毎月第2土曜10時〜。会計処理は毎月末までに提出。）':'仕事内容（例：月1回の会報作成、行事写真の撮影など）')+'">'+esc(role.description||'')+'</textarea>' +
           '<span class="role-note-period-label">実施時期・任期の目安</span>' +
-          '<textarea class="auto-grow" rows="2" data-field="periodNote" data-id="'+role.id+'" placeholder="例：4〜6月のみ／通年／運動会前後">'+esc(role.periodNote||'')+'</textarea>' +
+          '<textarea class="auto-grow" rows="2" data-field="periodNote" placeholder="例：4〜6月のみ／通年／運動会前後">'+esc(role.periodNote||'')+'</textarea>' +
           '<span class="role-note-period-label">関連資料のリンク（PDFなどをGoogleドライブ等で共有したURL）</span>' +
-          '<input type="text" data-field="resourceLink" data-id="'+role.id+'" value="'+esc(role.resourceLink||'')+'" placeholder="例：https://drive.google.com/...">' +
+          '<input type="text" data-field="resourceLink" value="'+esc(role.resourceLink||'')+'" placeholder="例：https://drive.google.com/...">' +
+          '<button type="button" class="btn small primary role-note-save-btn" data-action="saveRoleNote" data-id="'+role.id+'">この変更を保存</button>' +
+          '<div class="acc-hint-note">入力しただけでは保存されません。上のボタンを押して保存してください。</div>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -2186,22 +2188,27 @@
     });
   });
 
-  roleNotesWrap.addEventListener('change', function(e){
-    var t = e.target;
-    var id = t.getAttribute('data-id');
-    var field = t.getAttribute('data-field');
-    if(!id || !field) return;
-    var role = state.roles.find(function(r){ return r.id === id; });
-    if(!role) return;
-    if(field === 'description') role.description = t.value;
-    else if(field === 'periodNote') role.periodNote = t.value;
-    else if(field === 'resourceLink') role.resourceLink = t.value;
-    saveState();
-  });
   roleNotesWrap.addEventListener('input', function(e){
     if(e.target.classList.contains('auto-grow')) autoGrowTextarea(e.target);
   });
   roleNotesWrap.addEventListener('click', function(e){
+    var saveBtn = e.target.closest('[data-action="saveRoleNote"]');
+    if(saveBtn){
+      var rid2 = saveBtn.getAttribute('data-id');
+      var role2 = state.roles.find(function(r){ return r.id === rid2; });
+      var body2 = roleNotesWrap.querySelector('.role-note-body[data-role-id="'+rid2+'"]');
+      if(role2 && body2){
+        var descEl = body2.querySelector('[data-field="description"]');
+        var periodEl = body2.querySelector('[data-field="periodNote"]');
+        var linkEl = body2.querySelector('[data-field="resourceLink"]');
+        if(descEl) role2.description = descEl.value;
+        if(periodEl) role2.periodNote = periodEl.value;
+        if(linkEl) role2.resourceLink = linkEl.value;
+        saveState();
+        showSyncStatus('仕事内容メモを保存しました');
+      }
+      return;
+    }
     var toggleBtn = e.target.closest('[data-action="toggleRoleNote"]');
     if(!toggleBtn) return;
     var rid = toggleBtn.getAttribute('data-id');
