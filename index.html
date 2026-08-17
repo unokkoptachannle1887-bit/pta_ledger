@@ -1541,6 +1541,15 @@
         }
       });
     });
+    // 複数人制の役割で「既存メンバーから」新規加入予定に選ばれている場合も、同様に集計しておく
+    state.roles.forEach(function(r){
+      (r.nextYearRecruits||[]).forEach(function(entry){
+        if(entry.type === 'member' && entry.value){
+          incomingRoleIdsByMember[entry.value] = incomingRoleIdsByMember[entry.value] || {};
+          incomingRoleIdsByMember[entry.value][r.id] = true;
+        }
+      });
+    });
 
     function roleNamesFor(m){
       var idSet = {};
@@ -1549,7 +1558,7 @@
         if(entry && entry.type === 'leaving') return; // この役割だけ退任予定
         idSet[rid] = true;
       });
-      // 他の人から個別後任として指名されている役割も、来年度は本人の担当になる
+      // 他の人から個別後任として指名されている役割・複数人制で新規加入予定に選ばれている役割も、来年度は本人の担当になる
       Object.keys(incomingRoleIdsByMember[m.id] || {}).forEach(function(rid){ idSet[rid] = true; });
 
       return Object.keys(idSet).map(function(rid){
@@ -1565,15 +1574,13 @@
       return '<span class="preview-tag">'+esc(m.name||'（未入力）')+(extra?'　'+extra:'')+rolesHtml+'</span>';
     }
 
-    // 来年度からの新規加入予定（複数人制の役割に登録されている分）
+    // 来年度からの新規加入予定：既存メンバーは上のリストに(役割が追加された形で)反映済みなので、
+    // ここでは「まだ名簿にいない、本当に新しい人（手入力）」だけを対象にする
     var recruitNames = [];
     state.roles.forEach(function(r){
       if(abolishedRoleIds[r.id]) return;
       (r.nextYearRecruits||[]).forEach(function(entry){
-        if(entry.type === 'member'){
-          var mm = state.members.find(function(x){ return x.id === entry.value; });
-          recruitNames.push((mm?mm.name:'（削除済み）') + '（' + (r.name||'') + '）');
-        } else {
+        if(entry.type === 'text' && entry.value){
           recruitNames.push(entry.value + '（' + (r.name||'') + '）');
         }
       });
