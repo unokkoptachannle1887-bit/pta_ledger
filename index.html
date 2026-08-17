@@ -268,6 +268,9 @@
     padding:8px 0; border-top:1px solid var(--paper-line);
   }
   .team-count-row{border-top:none; padding-top:0; font-size:13px;}
+  .next-year-team{background:var(--ok-bg); margin:0 -4px; padding:10px 4px !important; border-top:none !important;}
+  .next-year-team .team-label{color:var(--ok);}
+  .next-year-team .succ-note{margin-top:6px;}
   .team-label{display:block; font-size:11px; color:var(--ink-soft); font-weight:700; letter-spacing:.03em; margin-bottom:6px;}
   .preview-tags{display:flex; flex-wrap:wrap; gap:6px;}
   .status-groups{display:flex; flex-direction:column; gap:8px;}
@@ -1659,7 +1662,7 @@
           .map(function(m){ return '<option value="'+m.id+'">'+esc(m.name||'（未入力）')+'</option>'; })
           .join('');
         var chain =
-          '<div class="team-section"><span class="team-label">現在の担当</span>'+flexMembersHtml+'</div>' +
+          '<div class="team-section"><span class="team-label">現在の担当（'+currentFY+'年度）</span>'+flexMembersHtml+'</div>' +
           '<div class="team-section"><span class="team-label">担当者を追加</span><span class="recruit-add">' +
             '<select class="flex-add-select" data-role="'+role.id+'">' +
               '<option value="">既存メンバーから選ぶ</option>' +
@@ -1703,9 +1706,27 @@
         var chain = '<div class="team-section team-count-row">'+countLine+'</div>';
 
         if(mems.length > 0){
-          chain += '<div class="team-section"><span class="team-label">現在の担当</span>'+splitMembersHtml(mems, role)+'</div>';
+          chain += '<div class="team-section"><span class="team-label">現在の担当（'+currentFY+'年度）</span>'+splitMembersHtml(mems, role)+'</div>';
         }
         if(!role.abolishNextYear){
+          // 「継続予定の人＋新規加入予定の人」＝来年度の体制を、現在の担当のすぐ下でまとめて明示する
+          var stayingNames = mems.filter(function(m){ return memberStatusInfo(m, role).cls === 'stay'; })
+            .map(function(m){ return m.name || '（未入力）'; });
+          var recruitNames = recruits.map(function(entry){
+            if(entry.type === 'member'){
+              var mm2 = state.members.find(function(x){ return x.id === entry.value; });
+              return mm2 ? (mm2.name || '（未入力）') : '（削除済みメンバー）';
+            }
+            return entry.value;
+          });
+          var nextYearNames = stayingNames.concat(recruitNames);
+          if(nextYearNames.length > 0){
+            chain += '<div class="team-section next-year-team"><span class="team-label">来年度の体制（'+nextFY+'年度・'+nextYearNames.length+'名）</span>' +
+              '<div class="preview-tags">' + nextYearNames.map(function(n){ return '<span class="handoff-name stay">'+esc(n)+'</span>'; }).join('') + '</div>' +
+              '<div class="succ-note">上の「現在の担当」のうち続投予定の人と、新規加入予定の人をあわせた、来年度の見込みメンバーです。</div>' +
+            '</div>';
+          }
+
           var recruitTags = recruits.map(function(entry, idx){
             var label;
             if(entry.type === 'member'){
