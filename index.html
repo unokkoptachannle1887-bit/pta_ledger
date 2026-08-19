@@ -243,6 +243,7 @@
     padding:5px 10px; border:1px solid var(--paper-line); background:var(--paper-alt); font-size:12.5px;
   }
   .preview-tag .roles{display:block; font-size:10.5px; color:var(--ink-soft); margin-top:2px;}
+  .preview-tag .roles.bukai-badge{color:var(--amber); font-weight:700;}
   .preview-summary{font-size:12px; color:var(--ink-soft); margin-bottom:12px;}
   .shortage-summary.none{background:var(--ok-bg); border-left-color:var(--ok); color:var(--ok);}
   .shortage-summary b{display:block; font-size:12px; margin-bottom:4px; letter-spacing:.03em;}
@@ -1653,7 +1654,7 @@
     if(staying.length===0) lines.push('　いません');
     staying.forEach(function(m){
       var roles = roleNamesFor(m);
-      lines.push('　・'+(m.name||'（未入力）')+(roles.length?'　'+roles.join('、'):'　（担当役割なし）'));
+      lines.push('　・'+(m.name||'（未入力）')+(roles.length?'　'+roles.join('、'):'　（担当役割なし）')+(m.skipBukai?'　【部会不参加】':''));
     });
     lines.push('');
     if(recruitNames.length){
@@ -1665,14 +1666,14 @@
     if(unconfirmed.length===0) lines.push('　いません');
     unconfirmed.forEach(function(m){
       var roles = roleNamesFor(m);
-      lines.push('　・'+(m.name||'（未入力）')+(roles.length?'　'+roles.join('、'):'　（担当役割なし）'));
+      lines.push('　・'+(m.name||'（未入力）')+(roles.length?'　'+roles.join('、'):'　（担当役割なし）')+(m.skipBukai?'　【部会不参加】':''));
     });
     lines.push('');
     lines.push('■ 退任予定（'+leaving.length+'名）※担当役割は今年度のものです');
     if(leaving.length===0) lines.push('　いません');
     leaving.forEach(function(m){
       var roles = roleNamesFor(m);
-      lines.push('　・'+(m.name||'（未入力）')+(roles.length?'　'+roles.join('、'):'　（担当役割なし）'));
+      lines.push('　・'+(m.name||'（未入力）')+(roles.length?'　'+roles.join('、'):'　（担当役割なし）')+(m.skipBukai?'　【部会不参加】':''));
     });
     return lines.join('\n');
   }
@@ -1804,7 +1805,7 @@
       var n = note ? '<div class="note">'+esc(note)+'</div>' : '';
       return n + '<ul>' + list.map(function(m){
         var roles = roleNamesFor(m);
-        return '<li>'+esc(m.name||'（未入力）')+(roles.length?'　'+esc(roles.join('、')):'　（担当役割なし）')+'</li>';
+        return '<li>'+esc(m.name||'（未入力）')+(roles.length?'　'+esc(roles.join('、')):'　（担当役割なし）')+(m.skipBukai?'　【部会不参加】':'')+'</li>';
       }).join('') + '</ul>';
     }
 
@@ -1883,7 +1884,8 @@
     function tag(m, extra){
       var roles = roleNamesFor(m);
       var rolesHtml = roles.length ? '<span class="roles">'+esc(roles.join('、'))+'</span>' : '<span class="roles">（担当役割なし）</span>';
-      return '<span class="preview-tag">'+esc(m.name||'（未入力）')+(extra?'　'+extra:'')+rolesHtml+'</span>';
+      var bukaiHtml = m.skipBukai ? '<span class="roles bukai-badge">部会不参加</span>' : '';
+      return '<span class="preview-tag">'+esc(m.name||'（未入力）')+(extra?'　'+extra:'')+rolesHtml+bukaiHtml+'</span>';
     }
 
     // 来年度からの新規加入予定：既存メンバーは上のリストに(役割が追加された形で)反映済みなので、
