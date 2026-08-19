@@ -653,8 +653,8 @@
         {id:r2, name:'広報部長', neededNextYear:2, abolishNextYear:false, roleType:'team', nextYearRecruits:[], description:'', periodNote:'', resourceLink:'', scheduleEnabled:false, scheduleStartDate:'', scheduleTargetDate:'', linkedScheduleId:null}
       ],
       members: [
-        {id:uid(), name:'山田 太郎', roleIds:[r1], continueType:'thisYear', untilYear:currentFY, successors:{}, note:''},
-        {id:uid(), name:'佐藤 花子', roleIds:[r2], continueType:'untilYear', untilYear:currentFY+1, successors:{}, note:''}
+        {id:uid(), name:'山田 太郎', roleIds:[r1], continueType:'thisYear', untilYear:currentFY, successors:{}, note:'', skipBukai:false},
+        {id:uid(), name:'佐藤 花子', roleIds:[r2], continueType:'untilYear', untilYear:currentFY+1, successors:{}, note:'', skipBukai:false}
       ],
       schedules: []
     };
@@ -717,6 +717,7 @@
         }
       }
       delete m.successor;
+      if(typeof m.skipBukai !== 'boolean') m.skipBukai = false;
     });
     return s;
   }
@@ -1010,7 +1011,7 @@
         } else if(entry.type === 'text' && entry.value){
           state.members.push({
             id:uid(), name:entry.value, roleIds:[r.id], continueType:'unconfirmed',
-            untilYear:incoming, successors:{}, note:''
+            untilYear:incoming, successors:{}, note:'', skipBukai:false
           });
         }
       });
@@ -1231,7 +1232,7 @@
         var r = state.roles.find(function(x){ return x.id === rid; });
         return r ? (r.name||'（名称未設定）') : null;
       }).filter(Boolean);
-      var summary = (roleNames.length ? roleNames.join('・') : '担当役割未設定') + '　' + ctSummaryLabel(m);
+      var summary = (roleNames.length ? roleNames.join('・') : '担当役割未設定') + '　' + ctSummaryLabel(m) + (m.skipBukai ? '　部会不参加' : '');
       return '' +
       '<div class="acc-item'+(isOpen?' open':'')+'" data-member-id="'+m.id+'">' +
         '<div class="acc-head-row">' +
@@ -1258,6 +1259,7 @@
             '<label><input type="radio" name="ct-'+m.id+'" data-field="continueType" data-value="unconfirmed" data-id="'+m.id+'" '+(isUnconfirmed?'checked':'')+'> 未確認</label>' +
           '</div></div>' +
           '<div class="acc-field"><label>後任予定者</label>'+successorCellHTML(m)+'</div>' +
+          '<label class="acc-check"><input type="checkbox" data-field="skipBukai" data-id="'+m.id+'" '+(m.skipBukai?'checked':'')+'> 部会には出席しない（担当役割のみ持つ）</label>' +
           '<div class="acc-field"><label>備考</label><input type="text" data-field="note" data-id="'+m.id+'" value="'+esc(m.note||'')+'" placeholder="任意"></div>' +
         '</div>' +
       '</div>';
@@ -1427,7 +1429,7 @@
       var manualInput = handoffList.querySelector('.flex-add-manual-input[data-role="'+roleId+'"]');
       var name = manualInput ? manualInput.value.trim() : '';
       if(!name) return;
-      state.members.push({id:uid(), name:name, roleIds:[roleId], continueType:'unconfirmed', untilYear:currentFY, successors:{}, note:''});
+      state.members.push({id:uid(), name:name, roleIds:[roleId], continueType:'unconfirmed', untilYear:currentFY, successors:{}, note:'', skipBukai:false});
     } else if(select.value){
       var member = state.members.find(function(m){ return m.id === select.value; });
       if(!member) return;
@@ -1647,7 +1649,7 @@
     lines.push('来年度の見込み（'+currentFY+'年度 → '+nextFY+'年度）');
     lines.push('現在'+state.members.length+'名 → 来年度は少なくとも'+staying.length+'名が継続予定です'+(unconfirmed.length?'（うち'+unconfirmed.length+'名は未確認）':'')+'。');
     lines.push('');
-    lines.push('■ 続投予定（'+staying.length+'名）※担当役割は来年度時点');
+    lines.push('■ 続投予定（'+staying.length+'名）※担当役割は来年度のものです');
     if(staying.length===0) lines.push('　いません');
     staying.forEach(function(m){
       var roles = roleNamesFor(m);
@@ -1659,14 +1661,14 @@
       recruitNames.forEach(function(n){ lines.push('　・'+n); });
       lines.push('');
     }
-    lines.push('■ 未確認（'+unconfirmed.length+'名）※担当役割は今年度時点');
+    lines.push('■ 未確認（'+unconfirmed.length+'名）※担当役割は今年度のものです');
     if(unconfirmed.length===0) lines.push('　いません');
     unconfirmed.forEach(function(m){
       var roles = roleNamesFor(m);
       lines.push('　・'+(m.name||'（未入力）')+(roles.length?'　'+roles.join('、'):'　（担当役割なし）'));
     });
     lines.push('');
-    lines.push('■ 退任予定（'+leaving.length+'名）※担当役割は今年度時点');
+    lines.push('■ 退任予定（'+leaving.length+'名）※担当役割は今年度のものです');
     if(leaving.length===0) lines.push('　いません');
     leaving.forEach(function(m){
       var roles = roleNamesFor(m);
@@ -1808,12 +1810,12 @@
 
     var html = '<h1>来年度の見込み（'+currentFY+'年度 → '+nextFY+'年度）</h1>';
     html += '<p>現在'+state.members.length+'名 → 来年度は少なくとも'+staying.length+'名が継続予定です'+(unconfirmed.length?'（うち'+unconfirmed.length+'名は未確認）':'')+'。</p>';
-    html += '<h2>続投予定（'+staying.length+'名）</h2>' + listHtml(staying, '担当役割は来年度時点です');
+    html += '<h2>続投予定（'+staying.length+'名）</h2>' + listHtml(staying, '担当役割は来年度の予定です');
     if(recruitNames.length){
       html += '<h2>新規加入予定（'+recruitNames.length+'名）</h2><ul>' + recruitNames.map(function(n){ return '<li>'+esc(n)+'</li>'; }).join('') + '</ul>';
     }
-    html += '<h2>未確認（'+unconfirmed.length+'名）</h2>' + listHtml(unconfirmed, '担当役割は今年度時点です');
-    html += '<h2>退任予定（'+leaving.length+'名）</h2>' + listHtml(leaving, '担当役割は今年度時点です');
+    html += '<h2>未確認（'+unconfirmed.length+'名）</h2>' + listHtml(unconfirmed, '担当役割は今年度のものです');
+    html += '<h2>退任予定（'+leaving.length+'名）</h2>' + listHtml(leaving, '担当役割は今年度のものです');
     return html;
   }
 
@@ -1898,7 +1900,7 @@
 
     var html = '<div class="preview-summary">現在 '+state.members.length+'名 → 来年度は少なくとも '+staying.length+'名が継続予定です'+(unconfirmed.length?'（うち'+unconfirmed.length+'名は未確認）':'')+'。</div>';
     html += '<div class="preview-groups">';
-    html += '<div class="preview-group stay"><b>続投予定（'+staying.length+'名）</b><div class="preview-year-note">担当役割は来年度（'+nextFY+'年度）時点の予定です</div><div class="preview-tags">' +
+    html += '<div class="preview-group stay"><b>続投予定（'+staying.length+'名）</b><div class="preview-year-note">担当役割は来年度（'+nextFY+'年度）の予定です</div><div class="preview-tags">' +
       (staying.length ? staying.map(function(m){ return tag(m); }).join('') : '<span class="empty-note" style="padding:0;">いません</span>') +
       '</div></div>';
     if(recruitNames.length){
@@ -1906,10 +1908,10 @@
         recruitNames.map(function(n){ return '<span class="preview-tag">'+esc(n)+'</span>'; }).join('') +
         '</div></div>';
     }
-    html += '<div class="preview-group unconfirmed"><b>未確認（'+unconfirmed.length+'名）</b><div class="preview-year-note">担当役割は現在（'+currentFY+'年度）時点のものです</div><div class="preview-tags">' +
+    html += '<div class="preview-group unconfirmed"><b>未確認（'+unconfirmed.length+'名）</b><div class="preview-year-note">担当役割は現在（'+currentFY+'年度）のものです</div><div class="preview-tags">' +
       (unconfirmed.length ? unconfirmed.map(function(m){ return tag(m); }).join('') : '<span class="empty-note" style="padding:0;">いません</span>') +
       '</div></div>';
-    html += '<div class="preview-group leave"><b>退任予定（'+leaving.length+'名）</b><div class="preview-year-note">担当役割は現在（'+currentFY+'年度）時点のものです</div><div class="preview-tags">' +
+    html += '<div class="preview-group leave"><b>退任予定（'+leaving.length+'名）</b><div class="preview-year-note">担当役割は現在（'+currentFY+'年度）のものです</div><div class="preview-tags">' +
       (leaving.length ? leaving.map(function(m){ return tag(m); }).join('') : '<span class="empty-note" style="padding:0;">いません</span>') +
       '</div></div>';
     html += '</div>';
@@ -2232,7 +2234,7 @@
     saveState(); renderAll();
   });
   document.getElementById('addMemberBtn').addEventListener('click', function(){
-    state.members.push({id:uid(), name:'', roleIds:[], continueType:'unconfirmed', untilYear:currentFY, successors:{}, note:''});
+    state.members.push({id:uid(), name:'', roleIds:[], continueType:'unconfirmed', untilYear:currentFY, successors:{}, note:'', skipBukai:false});
     saveState(); renderAll();
   });
   scheduleTabsWrap.addEventListener('click', function(e){
@@ -2471,6 +2473,7 @@
     }
     else if(field === 'continueType') member.continueType = t.getAttribute('data-value');
     else if(field === 'untilYear') member.untilYear = parseInt(t.value,10) || nextFY;
+    else if(field === 'skipBukai') member.skipBukai = t.checked;
     else return; // 上記のいずれでもなければ何もしない(例:担当役割チェックボックス)
     saveState(); renderAll();
   });
